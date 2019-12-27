@@ -58,20 +58,32 @@ def count_coords(x1, y1, x2, y2):
 
 
 class Gun(pygame.sprite.Sprite):
-    image = load_image('gun.jpg')
-    image = pygame.transform.scale(image, (25, 25))
+    image_1 = load_image('gun.jpg')
+    image_1 = pygame.transform.scale(image_1, (25, 25))
+    image_2 = load_image('boom.jpg')
+    image_2 = pygame.transform.scale(image_2, (50, 50))
 
     def __init__(self, group, *args):
         super().__init__(group)
-        self.rect = Gun.image.get_rect()
+        self.image = self.image_1
+        self.rect = self.image.get_rect()
         self.rect.x = args[0]
         self.rect.y = args[1]
+        self.boom = False
+        self.i = 0
         self.dx = V // 100 * cos(args[2])
         self.dy = V // 100 * sin(args[2])
 
     def update(self):
-        self.rect.x += self.dx
-        self.rect.y += self.dy
+        if self.boom:
+            if self.i == 0:
+                self.image = Gun.image_2
+            self.i += 1
+            if self.i == 50:
+                gun_sprites.remove(self)
+        else:
+            self.rect.x += self.dx
+            self.rect.y += self.dy
 
 
 class Tower_and_build(pygame.sprite.Sprite):
@@ -182,7 +194,9 @@ class Evil(pygame.sprite.Sprite):
             self.image2 = pygame.transform.flip(self.image2, flip, 0)
         self.rect.x += self.d_x
         self.rect.y += self.d_y
-        if pygame.sprite.spritecollide(self, gun_sprites, True):
+        a = pygame.sprite.spritecollide(self, gun_sprites, False)
+        if a:
+            a[0].boom = True
             self.hp -= 10
         if self.hp == 0:
             Evil_sprites.remove(self)
@@ -314,10 +328,10 @@ if __name__ == '__main__':
     pygame.time.set_timer(Cityanim, 1000)
     pygame.time.set_timer(Seaanim, 2000)
     pygame.time.set_timer(Electroanim, 100)
-    pygame.time.set_timer(MoveEvil, 500)
+    pygame.time.set_timer(MoveEvil, 200)
     pygame.time.set_timer(AddEvil, 20000)
-    pygame.time.set_timer(Buildanim, 2000)
-    pygame.time.set_timer(Hit, 3000)
+    pygame.time.set_timer(Buildanim, 1000)
+    pygame.time.set_timer(Hit, 2000)
     pygame.time.set_timer(MoveGun, 10)
     running = True
     while running:
