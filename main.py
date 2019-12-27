@@ -57,8 +57,27 @@ def count_coords(x1, y1, x2, y2):
     return d_types[typ]
 
 
+class Player:
+    def __init__(self):
+        self.heart = 20
+        self.money = 200
+        self.image_heart = load_image('heart.png', (255, 255, 255))
+        self.image_heart = pygame.transform.scale(self.image_heart, (90, 60))
+        self.image_money = load_image('money.jpg', (255, 255, 255))
+        self.image_money = pygame.transform.scale(self.image_money, (50, 50))
+
+    def draw(self):
+        screen.blit(self.image_heart, (50, -5))
+        screen.blit(self.image_money, (200, 0))
+        font = pygame.font.Font(None, 50)
+        text = font.render(str(self.heart), 1, (255, 255, 255))
+        screen.blit(text, (120, 10))
+        text = font.render(str(self.money), 1, (255, 255, 255))
+        screen.blit(text, (250, 10))
+
+
 class Gun(pygame.sprite.Sprite):
-    image_1 = load_image('gun.jpg')
+    image_1 = load_image('gun.png', (255, 255, 255))
     image_1 = pygame.transform.scale(image_1, (25, 25))
     image_2 = load_image('boom.jpg')
     image_2 = pygame.transform.scale(image_2, (50, 50))
@@ -122,7 +141,9 @@ class Tower_and_build(pygame.sprite.Sprite):
                 self.rect.size[0] >= \
                 pos[0] and self.rect.y + self.rect.size[1] >= pos[1] and not (
                 self.built):
-            self.startbuild = True
+            if player.money >= 100:
+                self.startbuild = True
+                player.money -= 100
 
     def update(self):
         if self.change:
@@ -174,7 +195,7 @@ class Evil(pygame.sprite.Sprite):
         super().__init__(group)
         self.coords = ROAD[choice([0, 1])]
         self.pos = 0
-        self.hp = 100
+        self.hp = 70
         self.image1 = Evil.image
         self.image2 = Evil.image2
         self.image = self.image1
@@ -196,10 +217,12 @@ class Evil(pygame.sprite.Sprite):
         self.rect.y += self.d_y
         a = pygame.sprite.spritecollide(self, gun_sprites, False)
         if a:
-            a[0].boom = True
-            self.hp -= 10
+            if a[0].boom == False:
+                a[0].boom = True
+                self.hp -= 10
         if self.hp == 0:
             Evil_sprites.remove(self)
+            player.money += 20
 
 
 class Backgroung:
@@ -314,6 +337,7 @@ Electroanim = 3
 Buildanim = 10
 MoveEvil = 30
 AddEvil = 28
+player = Player()
 Evil_sprites = pygame.sprite.Group()
 a = Evil(Evil_sprites)
 evils.append(a)
@@ -350,6 +374,7 @@ if __name__ == '__main__':
                     if evil.rect.x == 49 and (
                             evil.rect.y == 371 or evil.rect.y == 391):
                         Evil_sprites.remove(evil)
+                        player.heart -= 1
             if event.type == AddEvil:
                 a = Evil(Evil_sprites)
                 evils.append(a)
@@ -369,7 +394,7 @@ if __name__ == '__main__':
                         x1, y1 = build.rect.x, build.rect.y
                         for evil in Evil_sprites:
                             x2, y2 = evil.rect.x, evil.rect.y
-                            if (x2 - x1) ** 2 + (y2 - y1) ** 2 <= 22500:
+                            if (x2 - x1) ** 2 + (y2 - y1) ** 2 <= 40000:
                                 angle = count_coords(x1 + 20, y1 + 20, x2 + 30,
                                                      y2 + 30)
                                 if angle:
@@ -379,6 +404,7 @@ if __name__ == '__main__':
             if event.type == MoveGun:
                 gun_sprites.update()
         backgroung_image.draw()
+        player.draw()
         cityo.draw()
         seao.draw()
         electroo.draw()
