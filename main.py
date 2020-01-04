@@ -3,6 +3,7 @@ import os
 from random import choice
 from math import asin, pi, sqrt, sin, cos, atan
 from PIL import Image, ImageFilter
+import sys
 
 ROAD = [[[1080, 120, -5, 0, 0], [320, 120, 3, 5, 1], [500, 420, -4, 5, 1],
          [436, 500, -3, -1, 0],
@@ -284,6 +285,25 @@ class Restart(pygame.sprite.Sprite):
         return False
 
 
+class Exit(pygame.sprite.Sprite):
+    exit_btn = load_image("exit.png", (255, 255, 255))
+    exit_btn = pygame.transform.scale(exit_btn, (200, 250))
+
+    def __init__(self, group):
+        super().__init__(group)
+        self.image = Exit.exit_btn
+        self.rect = self.image.get_rect()
+        self.rect.x = 450
+        self.rect.y = 550
+
+    def get_click(self, pos):
+        if self.rect.x <= pos[0] and self.rect.y <= pos[1] and self.rect.x + \
+                self.rect.size[0] >= \
+                pos[0] and self.rect.y + self.rect.size[1] >= pos[1]:
+            return True
+        return False
+
+
 class Backgroung:
     def __init__(self):
         self.image = load_image("fonmain.png")
@@ -383,10 +403,121 @@ class Electro:
         screen.blit(self.image, (0, 0))
 
 
+class BackgroundMenu:
+    def __init__(self):
+        self.image = load_image("fonmenu.png")
+        self.image = pygame.transform.scale(self.image, (1080, 720))
+
+    def draw(self):
+        screen.blit(self.image, (0, 0))
+
+
+class NameMenu:
+    def __init__(self):
+        self.image = load_image("name.png", (255, 255, 255))
+        self.image = pygame.transform.scale(self.image, (1080, 720))
+
+    def draw(self):
+        screen.blit(self.image, (30, 0))
+
+
+class AuthorMenu:
+    def __init__(self):
+        self.image = load_image("text5.png", (255, 255, 255))
+        self.image = pygame.transform.scale(self.image, (108, 72))
+
+    def draw(self):
+        screen.blit(self.image, (972, 670))
+
+
+class StartMenu(pygame.sprite.Sprite):
+    image_start = load_image('text1.png', (255, 255, 255))
+    image_start = pygame.transform.scale(image_start, (300, 150))
+
+    def __init__(self, group):
+        super().__init__(group)
+        self.image = StartMenu.image_start
+        self.rect = self.image.get_rect()
+        self.rect.x = 0
+        self.rect.y = 150
+
+    def update(self, *args):
+        if args and args[
+            0].type == pygame.MOUSEMOTION and self.rect.collidepoint(
+            args[0].pos):
+            self.image = pygame.transform.scale(StartMenu.image_start,
+                                                (400, 200))
+        elif args and args[
+            0].type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(
+            args[0].pos):
+            game()
+        else:
+            self.image = pygame.transform.scale(StartMenu.image_start,
+                                                (300, 150))
+
+
+class EndMenu(pygame.sprite.Sprite):
+    image_end = load_image('text2.png', (255, 255, 255))
+    image_end = pygame.transform.scale(image_end, (300, 150))
+
+    def __init__(self, group):
+        super().__init__(group)
+        self.image = EndMenu.image_end
+        self.rect = self.image.get_rect()
+        self.rect.x = 0
+        self.rect.y = 550
+
+    def update(self, *args):
+        if args and args[
+            0].type == pygame.MOUSEMOTION and self.rect.collidepoint(
+            args[0].pos):
+            self.image = pygame.transform.scale(EndMenu.image_end,
+                                                (400, 200))
+        elif args and args[
+            0].type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(
+            args[0].pos):
+            pygame.quit()
+            sys.exit(0)
+        else:
+            self.image = pygame.transform.scale(EndMenu.image_end,
+                                                (300, 150))
+
+
+class Records(pygame.sprite.Sprite):
+    image_records = load_image('text4.png', (255, 255, 255))
+    image_records = pygame.transform.scale(image_records, (300, 150))
+
+    def __init__(self, group):
+        super().__init__(group)
+        self.image = Records.image_records
+        self.rect = self.image.get_rect()
+        self.rect.x = 0
+        self.rect.y = 350
+
+    def update(self, *args):
+        if args and args[
+            0].type == pygame.MOUSEMOTION and self.rect.collidepoint(
+            args[0].pos):
+            self.image = pygame.transform.scale(Records.image_records,
+                                                (400, 200))
+        else:
+            self.image = pygame.transform.scale(Records.image_records,
+                                                (300, 150))
+
+
 towers = []
 evils = []
 tower_sprites_1 = pygame.sprite.Group()
 backgroung_image = Backgroung()
+backgroung_menu_image = BackgroundMenu()
+name_menu = NameMenu()
+author_menu = AuthorMenu()
+end_menu_sprite = pygame.sprite.Group()
+start_menu_sprite = pygame.sprite.Group()
+StartMenu(start_menu_sprite)
+EndMenu(end_menu_sprite)
+records_sprite = pygame.sprite.Group()
+Records(records_sprite)
 cityo = City()
 electroo = Electro()
 seao = Sea()
@@ -401,6 +532,7 @@ Evil_sprites = pygame.sprite.Group()
 menu = pygame.sprite.Group()
 menu_pause = pygame.sprite.Group()
 menu_restart = pygame.sprite.Group()
+menu_exit = pygame.sprite.Group()
 a = Evil()
 evils.append(a)
 gun_sprites = pygame.sprite.Group()
@@ -412,11 +544,32 @@ for i in range(8):
 Pause(menu)
 Continue(menu_pause)
 Restart(menu_restart)
+Exit(menu_exit)
 check_pause = False
 check_restart = False
 check_pause_draw = True
+check_exit = False
 
-if __name__ == '__main__':
+
+def game():
+    global check_pause
+    global check_restart
+    global check_pause_draw
+    global menu_restart
+    global menu
+    global menu_pause
+    global Evil_sprites
+    global cityo
+    global towers
+    global seao
+    global evils
+    global electroo
+    global player
+    global backgroung_image
+    global tower_sprites_1
+    global gun_sprites
+    global check_exit
+    global menu_exit
     pygame.time.set_timer(Cityanim, 1000)
     pygame.time.set_timer(Seaanim, 2000)
     pygame.time.set_timer(Electroanim, 100)
@@ -439,6 +592,10 @@ if __name__ == '__main__':
                             check_restart = i.get_click(event.pos)
                             if check_restart:
                                 check_pause = False
+                        for i in menu_exit:
+                            check_exit = i.get_click(event.pos)
+                            if check_exit:
+                                check_pause = False
 
             if check_pause_draw:
                 screen.blit(load_image("fon_pause.png"), (0, 0))
@@ -448,8 +605,9 @@ if __name__ == '__main__':
                 check_pause_draw = False
             menu_pause.draw(screen)
             menu_restart.draw(screen)
+            menu_exit.draw(screen)
         else:
-            if check_restart:
+            if check_restart or check_exit:
                 towers = []
                 evils = []
                 tower_sprites_1 = pygame.sprite.Group()
@@ -474,6 +632,9 @@ if __name__ == '__main__':
                 check_pause = False
                 check_restart = False
                 check_pause_draw = True
+                if check_exit:
+                    check_exit = False
+                    return
             check_pause_draw = True
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -533,6 +694,26 @@ if __name__ == '__main__':
             tower_sprites_1.draw(screen)
             menu.draw(screen)
             tower_sprites_1.update()
+        pygame.display.flip()
+        clock.tick(10000)
+    pygame.quit()
+
+
+if __name__ == '__main__':
+    running_menu = True
+    while running_menu:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running_menu = False
+            start_menu_sprite.update(event)
+            end_menu_sprite.update(event)
+            records_sprite.update(event)
+        backgroung_menu_image.draw()
+        name_menu.draw()
+        author_menu.draw()
+        start_menu_sprite.draw(screen)
+        end_menu_sprite.draw(screen)
+        records_sprite.draw(screen)
         pygame.display.flip()
         clock.tick(10000)
     pygame.quit()
