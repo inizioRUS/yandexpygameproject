@@ -11,6 +11,12 @@ ROAD = [[[1080, 120, -5, 0, 0], [320, 120, 3, 5, 1], [500, 420, -4, 5, 1],
         [[1080, 280, -5, 0, 0], [380, 280, 3, 4, 1], [500, 440, -4, 5, 1],
          [436, 520, -3, -1, 0],
          [49, 391, 0, 0, 0], [50, 392]]]
+ROAD2 = [[[1080, 120, -10, 0, 0], [320, 120, 6, 10, 1], [500, 420, -8, 10, 1],
+         [436, 500, -6, -2, 0],
+         [52, 372, 0, 0, 0], [50, 372]],
+        [[1080, 280, -10, 0, 0], [380, 280, 6, 8, 1], [500, 440, -8, 10, 1],
+         [436, 520, -6, -2, 0],
+         [52, 392, 0, 0, 0], [53, 393]]]
 COOR_BUILD = [(250, 140), (360, 65), (500, 225), (800, 370), (575, 375),
               (250, 550), (220, 370),
               (310, 390)]
@@ -207,7 +213,6 @@ class Evil(pygame.sprite.Sprite):
 
     def update(self):
         self.image = self.image2 if self.image == self.image1 else self.image1
-
         if self.rect.x == self.coords[self.pos + 1][0] and self.rect.y == \
                 self.coords[self.pos + 1][1]:
             self.pos += 1
@@ -221,11 +226,51 @@ class Evil(pygame.sprite.Sprite):
         if a:
             if a[0].boom == False:
                 a[0].boom = True
-                a[0].evil_remove = self
                 self.hp -= 10
         if self.hp == 0:
             Evil_sprites.remove(self)
             player.money += 20
+
+
+class Evil2(pygame.sprite.Sprite):
+    image = load_image('Evil2/evil.jpg', (255, 255, 255))
+    image2 = load_image('Evil2/evil2.jpg', (255, 255, 255))
+    image = pygame.transform.scale(image, (105, 70))
+    image2 = pygame.transform.scale(image2, (105, 70))
+    image = pygame.transform.flip(image, True, False)
+    image2 = pygame.transform.flip(image2, True, False)
+
+    def __init__(self):
+        super().__init__(Evil2_sprites)
+        self.coords = ROAD2[choice([0, 1])]
+        self.pos = 0
+        self.hp = 30
+        self.image1 = Evil2.image
+        self.image2 = Evil2.image2
+        self.image = self.image1
+        self.rect = self.image2.get_rect()
+        self.rect.x, self.rect.y, self.d_x, self.d_y, flip = self.coords[
+            self.pos]
+
+    def update(self):
+        self.image = self.image2 if self.image == self.image1 else self.image1
+        if self.rect.x == self.coords[self.pos + 1][0] and self.rect.y == \
+                self.coords[self.pos + 1][1]:
+            self.pos += 1
+            self.rect.x, self.rect.y, self.d_x, self.d_y, flip = self.coords[
+                self.pos]
+            self.image1 = pygame.transform.flip(self.image1, flip, 0)
+            self.image2 = pygame.transform.flip(self.image2, flip, 0)
+        self.rect.x += self.d_x
+        self.rect.y += self.d_y
+        a = pygame.sprite.spritecollide(self, gun_sprites, False)
+        if a:
+            if a[0].boom == False:
+                a[0].boom = True
+                self.hp -= 10
+        if self.hp == 0:
+            Evil2_sprites.remove(self)
+            player.money += 10
 
 
 class Pause(pygame.sprite.Sprite):
@@ -618,14 +663,18 @@ Electroanim = 3
 Buildanim = 10
 MoveEvil = 30
 AddEvil = 28
+
+AddEvil2 = 18
 player = Player()
 Evil_sprites = pygame.sprite.Group()
+Evil2_sprites = pygame.sprite.Group()
 menu = pygame.sprite.Group()
 menu_pause = pygame.sprite.Group()
 menu_restart = pygame.sprite.Group()
 menu_exit = pygame.sprite.Group()
 a = Evil()
 evils.append(a)
+Evil2()
 gun_sprites = pygame.sprite.Group()
 Hit = 29
 MoveGun = 27
@@ -651,6 +700,7 @@ def game():
     global menu
     global menu_pause
     global Evil_sprites
+    global Evil2_sprites
     global cityo
     global towers
     global seao
@@ -667,9 +717,10 @@ def game():
     pygame.time.set_timer(Electroanim, 100)
     pygame.time.set_timer(MoveEvil, 200)
     pygame.time.set_timer(AddEvil, 20000)
+    pygame.time.set_timer(AddEvil2, 10000)
     pygame.time.set_timer(Buildanim, 1000)
     pygame.time.set_timer(Hit, 1000)
-    pygame.time.set_timer(MoveGun, 10)
+    pygame.time.set_timer(MoveGun, 5)
     running = True
     while running:
         if check_pause:
@@ -713,6 +764,7 @@ def game():
                 menu_pause = pygame.sprite.Group()
                 menu_restart = pygame.sprite.Group()
                 a = Evil()
+                Evil2()
                 evils.append(a)
                 gun_sprites = pygame.sprite.Group()
                 for i in range(8):
@@ -744,9 +796,17 @@ def game():
                                 evil.rect.y == 371 or evil.rect.y == 391):
                             Evil_sprites.remove(evil)
                             player.heart -= 1
+                    Evil2_sprites.update()
+                    for evil2 in Evil2_sprites:
+                        if evil2.rect.x == 52 and (
+                                evil2.rect.y == 372 or evil2.rect.y == 392):
+                            Evil2_sprites.remove(evil2)
+                            player.heart -= 1
                 if event.type == AddEvil:
                     a = Evil()
                     evils.append(a)
+                if event.type == AddEvil2:
+                    Evil2()
                 if event.type == Buildanim:
                     for i in towers:
                         i.builds()
@@ -762,17 +822,31 @@ def game():
                 if event.type == Hit:
                     for build in tower_sprites_1:
                         if build.built:
+                            hit_done = False
                             x1, y1 = build.rect.x, build.rect.y
                             for evil in Evil_sprites:
                                 x2, y2 = evil.rect.x, evil.rect.y
-                                if (x2 - x1) ** 2 + (y2 - y1) ** 2 <= 40000:
+                                if (x2 - x1) ** 2 + (y2 - y1) ** 2 <= 30000:
                                     angle = count_coords(x1 + 20, y1 + 20,
                                                          x2 + 30,
                                                          y2 + 30)
                                     if angle:
                                         Gun(gun_sprites, x1 + 20, y1 + 20,
                                             angle)
+                                        hit_done = True
                                         break
+                            if not hit_done:
+                                for evil2 in Evil2_sprites:
+                                    x2, y2 = evil2.rect.x, evil2.rect.y
+                                    if (x2 - x1) ** 2 + (
+                                            y2 - y1) ** 2 <= 30000:
+                                        angle = count_coords(x1 + 20, y1 + 20,
+                                                             x2 + 30,
+                                                             y2 + 30)
+                                        if angle:
+                                            Gun(gun_sprites, x1 + 20, y1 + 20,
+                                                angle)
+                                            break
 
                 if event.type == MoveGun:
                     gun_sprites.update()
@@ -782,6 +856,7 @@ def game():
             seao.draw()
             electroo.draw()
             Evil_sprites.draw(screen)
+            Evil2_sprites.draw(screen)
             gun_sprites.draw(screen)
             tower_sprites_1.draw(screen)
             menu.draw(screen)
