@@ -1243,7 +1243,6 @@ def draw_level(name_file):
             road_sprites_horizontal.draw(screen)
             road_sprites_vertical.draw(screen)
             road_sprites_rotate.draw(screen)
-
             player.draw()
             cityo.draw()
             seao.draw()
