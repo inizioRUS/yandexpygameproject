@@ -30,6 +30,11 @@ ROAD2 = [[[1080, 120, -10, 0, 0], [320, 120, 6, 10, 1], [500, 420, -8, 10, 1],
 COOR_BUILD = [(250, 140), (360, 65), (500, 225), (800, 370), (575, 375),
               (250, 550), (220, 370),
               (310, 390)]
+COOR_BUILD_PRE = [(500, 280), (720, 130), (1000, 450), (1600, 740), (1150, 750),
+                  (500, 1100), (440, 740),
+                  (620, 780)]
+V1 = 20000
+V2 = 10000
 V = 500
 size = width, height = 1080, 720
 screen = pygame.display.set_mode(size)
@@ -37,7 +42,6 @@ clock = pygame.time.Clock()
 running_menu = True
 check_pause = False
 check_restart = False
-check_pause_draw = True
 check_exit = False
 return_to_menu = False
 
@@ -102,7 +106,7 @@ class Game_over_anim:
 
 class Player:
     def __init__(self):
-        self.heart = 1
+        self.heart = 10
         self.money = 200
         self.points = 0
         self.image_heart = load_image('menu_in_game/heart.png', (255, 255, 255))
@@ -168,19 +172,26 @@ class Tower_and_build(pygame.sprite.Sprite):
     image4 = pygame.transform.scale(image4, (75, 150))
     images = [image, image2, image3, image_move_1, image_move_2, image_move_3,
               image4]
+    image_pre = pygame.transform.scale(image, (100, 100))
 
-    def __init__(self, group, pos):
+    def __init__(self, group, pos, flag=True):
         super().__init__(group)
-        self.checkcount = 0
-        self.change = False
-        self.startbuild = False
-        self.built = False
-        self.status = "UP"
-        self.statusi = 0
-        self.image = Tower_and_build.images[self.statusi]
-        self.rect = self.image.get_rect()
-        self.rect.x = pos[0]
-        self.rect.y = pos[1]
+        if flag:
+            self.checkcount = 0
+            self.change = False
+            self.startbuild = False
+            self.built = False
+            self.status = "UP"
+            self.statusi = 0
+            self.image = Tower_and_build.images[self.statusi]
+            self.rect = self.image.get_rect()
+            self.rect.x = pos[0]
+            self.rect.y = pos[1]
+        else:
+            self.image = Tower_and_build.image_pre
+            self.rect = self.image.get_rect()
+            self.rect.x = pos[0]
+            self.rect.y = pos[1]
 
     def get_click(self, pos, player):
         if self.rect.x <= pos[0] and self.rect.y <= pos[1] and self.rect.x + \
@@ -256,7 +267,8 @@ class Evil(pygame.sprite.Sprite):
             self.pos]
         ZOMBI.play()
 
-    def update(self, gun_sprites, Evil_sprites, player):
+    def update(self, gun_sprites, Evil_sprites, player, event1, event2):
+        global V1, V2
         self.image = self.image2 if self.image == self.image1 else self.image1
         if self.rect.x == self.coords[self.pos + 1][0] and self.rect.y == \
                 self.coords[self.pos + 1][1]:
@@ -277,6 +289,11 @@ class Evil(pygame.sprite.Sprite):
             Evil_sprites.remove(self)
             player.money += 20
             player.points += 1
+            if player.points % 10 == 0:
+                V1 = V1 // 2
+                V2 = V2 // 2
+                pygame.time.set_timer(event1, V1)
+                pygame.time.set_timer(event2, V2)
 
 
 class Evil2(pygame.sprite.Sprite):
@@ -299,7 +316,8 @@ class Evil2(pygame.sprite.Sprite):
         self.rect.x, self.rect.y, self.d_x, self.d_y, flip = self.coords[
             self.pos]
 
-    def update(self, gun_sprites, Evil2_sprites, player):
+    def update(self, gun_sprites, Evil2_sprites, player, event1, event2):
+        global V1, V2
         self.image = self.image2 if self.image == self.image1 else self.image1
         if self.rect.x == self.coords[self.pos + 1][0] and self.rect.y == \
                 self.coords[self.pos + 1][1]:
@@ -320,6 +338,11 @@ class Evil2(pygame.sprite.Sprite):
             MONEY.play()
             player.money += 10
             player.points += 1
+            if player.points % 10 == 0:
+                V1 = V1 // 2
+                V2 = V2 // 2
+                pygame.time.set_timer(event1, V1)
+                pygame.time.set_timer(event2, V2)
 
 
 class Pause(pygame.sprite.Sprite):
@@ -381,14 +404,14 @@ class Restart(pygame.sprite.Sprite):
 
 class Exit(pygame.sprite.Sprite):
     exit_btn = load_image("pause/exit.png", (255, 255, 255))
-    exit_btn = pygame.transform.scale(exit_btn, (200, 175))
+    exit_btn = pygame.transform.scale(exit_btn, (200, 50))
 
     def __init__(self, group):
         super().__init__(group)
         self.image = Exit.exit_btn
         self.rect = self.image.get_rect()
-        self.rect.x = 475
-        self.rect.y = 550
+        self.rect.x = 450
+        self.rect.y = 575
 
     def get_click(self, pos):
         if self.rect.x <= pos[0] and self.rect.y <= pos[1] and self.rect.x + \
@@ -399,12 +422,18 @@ class Exit(pygame.sprite.Sprite):
 
 
 class Backgroung:
-    def __init__(self):
-        self.image = load_image("fonmain.png")
-        self.image = pygame.transform.scale(self.image, (1080, 720))
+    def __init__(self, flag=True):
+        self.x = 0
+        self.y = 0
+        if flag:
+            self.image = load_image("fonmain.png")
+            self.image = pygame.transform.scale(self.image, (1080, 720))
+        else:
+            self.image = load_image("fonmain.png")
+            self.image = pygame.transform.scale(self.image, (2160, 1440))
 
     def draw(self):
-        screen.blit(self.image, (0, 0))
+        screen.blit(self.image, (self.x, self.y))
 
 
 class City:
@@ -415,12 +444,22 @@ class City:
     image3 = load_image("city/city3.png")
     image3 = pygame.transform.scale(image3, (1080, 720))
     images = [image, image2, image3]
+    pre_preview = pygame.transform.scale(image, (2160, 1440))
+    pre_preview2 = pygame.transform.scale(image2, (2160, 1440))
+    pre_preview3 = pygame.transform.scale(image3, (2160, 1440))
+    images2 = [pre_preview, pre_preview2, pre_preview3]
 
-    def __init__(self):
+    def __init__(self, flag=True):
+        self.x = 0
+        self.y = 0
+        self.flag = flag
         self.status = "UP"
         self.statusi = 1
-        self.image = City.images[self.statusi]
-        screen.blit(self.image, (0, 0))
+        if self.flag:
+            self.image = City.images[self.statusi]
+        else:
+            self.image = City.images2[self.statusi]
+        screen.blit(self.image, (self.x, self.y))
 
     def cheageimage(self):
         if self.status == "UP":
@@ -431,10 +470,13 @@ class City:
             self.statusi -= 1
             if self.statusi == 0:
                 self.status = "UP"
-        self.image = City.images[self.statusi]
+        if self.flag:
+            self.image = City.images[self.statusi]
+        else:
+            self.image = City.images2[self.statusi]
 
     def draw(self):
-        screen.blit(self.image, (0, 0))
+        screen.blit(self.image, (self.x, self.y))
 
 
 class Sea:
@@ -445,12 +487,22 @@ class Sea:
     image3 = load_image("sea/sea3.png")
     image3 = pygame.transform.scale(image3, (1080, 720))
     images = [image, image2, image3]
+    pre_preview = pygame.transform.scale(image, (2160, 1440))
+    pre_preview2 = pygame.transform.scale(image2, (2160, 1440))
+    pre_preview3 = pygame.transform.scale(image3, (2160, 1440))
+    images2 = [pre_preview, pre_preview2, pre_preview3]
 
-    def __init__(self):
+    def __init__(self, flag=True):
+        self.x = 0
+        self.y = 0
+        self.flag = flag
         self.status = "UP"
         self.statusi = 1
-        self.image = Sea.images[self.statusi]
-        screen.blit(self.image, (0, 0))
+        if self.flag:
+            self.image = Sea.images[self.statusi]
+        else:
+            self.image = Sea.images2[self.statusi]
+        screen.blit(self.image, (self.x, self.y))
 
     def cheageimage(self):
         if self.status == "UP":
@@ -461,10 +513,13 @@ class Sea:
             self.statusi -= 1
             if self.statusi == 0:
                 self.status = "UP"
-        self.image = Sea.images[self.statusi]
+        if self.flag:
+            self.image = Sea.images[self.statusi]
+        else:
+            self.image = Sea.images2[self.statusi]
 
     def draw(self):
-        screen.blit(self.image, (0, 0))
+        screen.blit(self.image, (self.x, self.y))
 
 
 class Electro:
@@ -475,12 +530,22 @@ class Electro:
     image3 = load_image("electro/electro3.png")
     image3 = pygame.transform.scale(image3, (1080, 720))
     images = [image, image2, image3]
+    pre_preview = pygame.transform.scale(image, (2160, 1440))
+    pre_preview2 = pygame.transform.scale(image2, (2160, 1440))
+    pre_preview3 = pygame.transform.scale(image3, (2160, 1440))
+    images2 = [pre_preview, pre_preview2, pre_preview3]
 
-    def __init__(self):
+    def __init__(self, flag=True):
+        self.x = 0
+        self.y = 0
+        self.flag = flag
         self.status = "UP"
         self.statusi = 1
-        self.image = Electro.images[self.statusi]
-        screen.blit(self.image, (0, 0))
+        if self.flag:
+            self.image = Electro.images[self.statusi]
+        else:
+            self.image = Electro.images2[self.statusi]
+        screen.blit(self.image, (self.x, self.y))
 
     def cheageimage(self):
         if self.status == "UP":
@@ -491,10 +556,13 @@ class Electro:
             self.statusi -= 1
             if self.statusi == 0:
                 self.status = "UP"
-        self.image = Electro.images[self.statusi]
+        if self.flag:
+            self.image = Electro.images[self.statusi]
+        else:
+            self.image = Electro.images2[self.statusi]
 
     def draw(self):
-        screen.blit(self.image, (0, 0))
+        screen.blit(self.image, (self.x, self.y))
 
 
 class BackgroundMenu:
@@ -524,79 +592,107 @@ class AuthorMenu:
         screen.blit(self.image, (972, 670))
 
 
-class StartMenu(pygame.sprite.Sprite):
+class StartMenu:
     image_start = load_image('menu/text1.png', (255, 255, 255))
     image_start = pygame.transform.scale(image_start, (300, 150))
 
-    def __init__(self, group):
-        super().__init__(group)
+    def __init__(self):
+        self.check_size = False
         self.image = StartMenu.image_start
         self.rect = self.image.get_rect()
         self.rect.x = 0
-        self.rect.y = 150
+        self.rect.y = 400
 
     def update(self, *args):
         if args and args[
             0].type == pygame.MOUSEMOTION and self.rect.collidepoint(
             args[0].pos):
-            self.image = pygame.transform.scale(StartMenu.image_start,
-                                                (400, 200))
+            self.check_size = True
         elif args and args[
             0].type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(
             args[0].pos):
             levels()
+        elif args and args[
+            0].type == pygame.MOUSEMOTION and not (self.rect.collidepoint(
+            args[0].pos)):
+            self.check_size = False
+
+    def draw(self):
+        if self.check_size:
+            screen.blit(pygame.transform.scale(StartMenu.image_start,
+                                               (400, 200)), (self.rect.x, self.rect.y))
         else:
-            self.image = pygame.transform.scale(StartMenu.image_start,
-                                                (300, 150))
+            screen.blit(pygame.transform.scale(StartMenu.image_start,
+                                               (300, 150)), (self.rect.x, self.rect.y))
 
 
-class EndMenu(pygame.sprite.Sprite):
+class EndMenu:
     image_end = load_image('menu/text2.png', (255, 255, 255))
     image_end = pygame.transform.scale(image_end, (300, 150))
 
-    def __init__(self, group):
-        super().__init__(group)
+    def __init__(self):
+        self.check_size = False
         self.image = EndMenu.image_end
         self.rect = self.image.get_rect()
-        self.rect.x = 0
-        self.rect.y = 550
+        self.rect.x = 750
+        self.rect.y = 400
 
     def update(self, *args):
         if args and args[
             0].type == pygame.MOUSEMOTION and self.rect.collidepoint(
             args[0].pos):
-            self.image = pygame.transform.scale(EndMenu.image_end,
-                                                (400, 200))
+            self.check_size = True
         elif args and args[
             0].type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(
             args[0].pos):
             pygame.quit()
             sys.exit(0)
+        elif args and args[
+            0].type == pygame.MOUSEMOTION and not (self.rect.collidepoint(
+            args[0].pos)):
+            self.check_size = False
+
+    def draw(self):
+        if self.check_size:
+            screen.blit(pygame.transform.scale(EndMenu.image_end,
+                                               (400, 200)), (self.rect.x, self.rect.y))
         else:
-            self.image = pygame.transform.scale(EndMenu.image_end,
-                                                (300, 150))
+            screen.blit(pygame.transform.scale(EndMenu.image_end,
+                                               (300, 150)), (self.rect.x, self.rect.y))
 
 
-class Records(pygame.sprite.Sprite):
+class Records:
     image_records = load_image('menu/text4.png', (255, 255, 255))
     image_records = pygame.transform.scale(image_records, (300, 150))
 
-    def __init__(self, group):
-        super().__init__(group)
+    def __init__(self):
+        self.check_size = False
         self.image = Records.image_records
         self.rect = self.image.get_rect()
-        self.rect.x = 0
-        self.rect.y = 350
+        self.rect.x = 400
+        self.rect.y = 400
 
     def update(self, *args):
         if args and args[
             0].type == pygame.MOUSEMOTION and self.rect.collidepoint(
             args[0].pos):
-            self.image = pygame.transform.scale(Records.image_records,
-                                                (400, 200))
+            self.check_size = True
+        elif args and args[
+            0].type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(
+            args[0].pos):
+            record()
+        elif args and args[
+            0].type == pygame.MOUSEMOTION and not (self.rect.collidepoint(
+            args[0].pos)):
+            self.check_size = False
+
+    def draw(self):
+        if self.check_size:
+            screen.blit(pygame.transform.scale(Records.image_records,
+                                               (400, 200)), (self.rect.x, self.rect.y))
         else:
-            self.image = pygame.transform.scale(Records.image_records,
-                                                (300, 150))
+            screen.blit(pygame.transform.scale(Records.image_records,
+                                               (300, 150)), (self.rect.x, self.rect.y))
 
 
 class NameLevels:
@@ -605,41 +701,49 @@ class NameLevels:
         self.image = pygame.transform.scale(self.image, (540, 360))
 
     def draw(self):
-        screen.blit(self.image, (360, 0))
+        screen.blit(self.image, (250, -120))
 
 
-class Level1(pygame.sprite.Sprite):
+class Level1:
     image_level_1 = load_image('menu/level1.png', (255, 255, 255))
     image_level_1 = pygame.transform.scale(image_level_1, (300, 150))
 
-    def __init__(self, group):
-        super().__init__(group)
+    def __init__(self):
+        self.check_size = False
         self.image = Level1.image_level_1
         self.rect = self.image.get_rect()
         self.rect.x = 0
-        self.rect.y = 150
+        self.rect.y = 300
 
     def update(self, *args):
         if args and args[
             0].type == pygame.MOUSEMOTION and self.rect.collidepoint(
             args[0].pos):
-            self.image = pygame.transform.scale(Level1.image_level_1,
-                                                (400, 200))
+            self.check_size = True
         elif args and args[
             0].type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(
             args[0].pos):
             name()
+        elif args and args[
+            0].type == pygame.MOUSEMOTION and not (self.rect.collidepoint(
+            args[0].pos)):
+            self.check_size = False
+
+    def draw(self):
+        if self.check_size:
+            screen.blit(pygame.transform.scale(Level1.image_level_1,
+                                               (400, 200)), (self.rect.x, self.rect.y))
         else:
-            self.image = pygame.transform.scale(Level1.image_level_1,
-                                                (300, 150))
+            screen.blit(pygame.transform.scale(Level1.image_level_1,
+                                               (300, 150)), (self.rect.x, self.rect.y))
 
 
-class Back(pygame.sprite.Sprite):
+class Back:
     image_back = load_image('menu/back.png', (255, 255, 255))
     image_back = pygame.transform.scale(image_back, (300, 150))
 
-    def __init__(self, group):
-        super().__init__(group)
+    def __init__(self):
+        self.check_size = False
         self.image = Back.image_back
         self.rect = self.image.get_rect()
         self.rect.x = 0
@@ -650,42 +754,182 @@ class Back(pygame.sprite.Sprite):
         if args and args[
             0].type == pygame.MOUSEMOTION and self.rect.collidepoint(
             args[0].pos):
-            self.image = pygame.transform.scale(Back.image_back,
-                                                (400, 200))
+            self.check_size = True
         elif args and args[
             0].type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(
             args[0].pos):
             return_to_menu = True
+        elif args and args[
+            0].type == pygame.MOUSEMOTION and not (self.rect.collidepoint(
+            args[0].pos)):
+            self.check_size = False
+
+    def draw(self):
+        if self.check_size:
+            screen.blit(pygame.transform.scale(Back.image_back,
+                                               (400, 200)), (self.rect.x, self.rect.y))
         else:
-            self.image = pygame.transform.scale(Back.image_back,
-                                                (300, 150))
+            screen.blit(pygame.transform.scale(Back.image_back,
+                                               (300, 150)), (self.rect.x, self.rect.y))
 
 
-class Level2(pygame.sprite.Sprite):
+class Level2:
     image_level_2 = load_image('menu/level2.png', (255, 255, 255))
     image_level_2 = pygame.transform.scale(image_level_2, (300, 150))
 
-    def __init__(self, group):
-        super().__init__(group)
-        self.image = Level2.image_level_2
+    def __init__(self):
+        self.check_size = False
+        self.image = Level1.image_level_1
         self.rect = self.image.get_rect()
-        self.rect.x = 0
-        self.rect.y = 350
+        self.rect.x = 750
+        self.rect.y = 300
 
     def update(self, *args):
         if args and args[
             0].type == pygame.MOUSEMOTION and self.rect.collidepoint(
             args[0].pos):
-            self.image = pygame.transform.scale(Level2.image_level_2,
-                                                (400, 200))
+            self.check_size = True
+        elif args and args[
+            0].type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(
+            args[0].pos):
+            name()
+        elif args and args[
+            0].type == pygame.MOUSEMOTION and not (self.rect.collidepoint(
+            args[0].pos)):
+            self.check_size = False
+
+    def draw(self):
+        if self.check_size:
+            screen.blit(pygame.transform.scale(Level2.image_level_2,
+                                               (400, 200)), (self.rect.x, self.rect.y))
         else:
-            self.image = pygame.transform.scale(Level2.image_level_2,
-                                                (300, 150))
+            screen.blit(pygame.transform.scale(Level2.image_level_2,
+                                               (300, 150)), (self.rect.x, self.rect.y))
+
+
+def pre_Preview(nicname):
+    check_up = False
+    check_down = False
+    check_right = False
+    check_left = False
+    Cityanim = 1
+    Seaanim = 2
+    Electroanim = 3
+    pygame.time.set_timer(Cityanim, 1000)
+    pygame.time.set_timer(Seaanim, 2000)
+    pygame.time.set_timer(Electroanim, 100)
+    tower_sprites_1 = pygame.sprite.Group()
+    backgroung_image = Backgroung(False)
+    cityo = City(False)
+    electroo = Electro(False)
+    seao = Sea(False)
+    for i in range(8):
+        a = Tower_and_build(tower_sprites_1, COOR_BUILD_PRE[i], False)
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type == Cityanim:
+                cityo.cheageimage()
+            if event.type == Seaanim:
+                seao.cheageimage()
+            if event.type == Electroanim:
+                electroo.cheageimage()
+            if event.type == pygame.KEYDOWN:
+                keys = pygame.key.get_pressed()
+                if keys[pygame.K_UP] or event.unicode in ['w', 'W', 'ц', 'Ц']:
+                    if backgroung_image.y < 0:
+                        for i in tower_sprites_1:
+                            i.rect.y += 20
+                        cityo.y += 20
+                        seao.y += 20
+                        electroo.y += 20
+                        backgroung_image.y += 20
+                if keys[pygame.K_DOWN] or event.unicode in ['s', 'S', 'ы', 'Ы']:
+                    if backgroung_image.y > - 720:
+                        for i in tower_sprites_1:
+                            i.rect.y -= 20
+                        cityo.y -= 20
+                        seao.y -= 20
+                        electroo.y -= 20
+                        backgroung_image.y -= 20
+                if keys[pygame.K_RIGHT] or event.unicode in ['В', 'в', 'd', 'D']:
+                    if backgroung_image.x > -1080:
+                        for i in tower_sprites_1:
+                            i.rect.x -= 20
+                        cityo.x -= 20
+                        seao.x -= 20
+                        electroo.x -= 20
+                        backgroung_image.x -= 20
+                if keys[pygame.K_LEFT] or event.unicode in ['A', 'a', 'ф', 'Ф']:
+                    if backgroung_image.x < 0:
+                        for i in tower_sprites_1:
+                            i.rect.x += 20
+                        cityo.x += 20
+                        seao.x += 20
+                        electroo.x += 20
+                        backgroung_image.x += 20
+                if keys[13]:
+                    game(nicname)
+                    return
+            if event.type == pygame.MOUSEMOTION:
+                check_left = True if event.pos[0] < 54 else False
+                check_right = True if event.pos[0] > 1026 else False
+                check_up = True if event.pos[1] < 36 else False
+                check_down = True if event.pos[1] > 684 else False
+        if check_left:
+            if backgroung_image.x < 0:
+                for i in tower_sprites_1:
+                    i.rect.x += 10
+                cityo.x += 10
+                seao.x += 10
+                electroo.x += 10
+                backgroung_image.x += 10
+        if check_right:
+            if backgroung_image.x > -1080:
+                for i in tower_sprites_1:
+                    i.rect.x -= 10
+                cityo.x -= 10
+                seao.x -= 10
+                electroo.x -= 10
+                backgroung_image.x -= 10
+        if check_down:
+            if backgroung_image.y > - 720:
+                for i in tower_sprites_1:
+                    i.rect.y -= 10
+                cityo.y -= 10
+                seao.y -= 10
+                electroo.y -= 10
+                backgroung_image.y -= 10
+        if check_up:
+            if backgroung_image.y < 0:
+                for i in tower_sprites_1:
+                    i.rect.y += 10
+                cityo.y += 10
+                seao.y += 10
+                electroo.y += 10
+                backgroung_image.y += 10
+        backgroung_image.draw()
+        cityo.draw()
+        seao.draw()
+        electroo.draw()
+        tower_sprites_1.draw(screen)
+        font = pygame.font.Font("data/8693.ttf", 55)
+        text = font.render(str("Предпросмотр карты"), 1, (255, 229, 0))
+        screen.blit(text, (300, 10))
+        screen.blit(pygame.transform.scale(load_image("menu/enter.png"), (200, 75)), (850, 600))
+        font = pygame.font.Font("data/8693.ttf", 20)
+        text = font.render(str("Начать игру"), 1, (255, 229, 0))
+        screen.blit(text, (860, 675))
+        pygame.display.flip()
+        clock.tick(10000)
+    pygame.quit()
 
 
 def game(text):
+    global V1, V2
     global check_pause
-    global check_pause_draw
     global check_restart
     global check_exit
     towers = []
@@ -727,8 +971,8 @@ def game(text):
     pygame.time.set_timer(Seaanim, 2000)
     pygame.time.set_timer(Electroanim, 100)
     pygame.time.set_timer(MoveEvil, 100)
-    pygame.time.set_timer(AddEvil, 2000)
-    pygame.time.set_timer(AddEvil2, 1000)
+    pygame.time.set_timer(AddEvil, V1)
+    pygame.time.set_timer(AddEvil2, V2)
     pygame.time.set_timer(Buildanim, 1000)
     pygame.time.set_timer(Hit, 1000)
     pygame.time.set_timer(MoveGun, 5)
@@ -739,32 +983,27 @@ def game(text):
                 if event.type == pygame.QUIT:
                     running = False
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    if event.button == 1:
-                        for i in menu_pause:
-                            check_pause = i.get_click(event.pos)
-                        for i in menu_restart:
-                            check_restart = i.get_click(event.pos)
-                            if check_restart:
-                                check_pause = False
-                        for i in menu_exit:
-                            check_exit = i.get_click(event.pos)
-                            if check_exit:
-                                check_pause = False
-
-            if check_pause_draw:
-                screen.blit(load_image("pause/fon_pause.png"), (0, 0))
-                font = pygame.font.Font(None, 50)
-                text = font.render(str("Menu"), 1, (0, 0, 0))
-                screen.blit(text, (500, 10))
-                check_pause_draw = False
+                    for i in menu_pause:
+                        check_pause = i.get_click(event.pos)
+                    for i in menu_restart:
+                        check_restart = i.get_click(event.pos)
+                        if check_restart:
+                            check_pause = False
+                    for i in menu_exit:
+                        check_exit = i.get_click(event.pos)
+                        if check_exit:
+                            check_pause = False
+            screen.blit(load_image("pause/fon_pause.png"), (0, 0))
+            font = pygame.font.Font("data/8693.ttf", 50)
+            text = font.render(str("Меню"), 1, (255, 229, 0))
+            screen.blit(text, (500, 10))
             menu_pause.draw(screen)
-            menu_restart.draw(screen)
             menu_exit.draw(screen)
+            menu_restart.draw(screen)
         else:
             if check_restart or check_exit:
                 check_pause = False
                 check_restart = False
-                check_pause_draw = True
                 if check_exit:
                     check_exit = False
                     return
@@ -792,7 +1031,9 @@ def game(text):
                 Pause(menu)
                 Continue(menu_pause)
                 Restart(menu_restart)
-            check_pause_draw = True
+                V1, V2 = 20000, 10000
+                pygame.time.set_timer(AddEvil, V1)
+                pygame.time.set_timer(AddEvil2, V2)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
@@ -803,14 +1044,14 @@ def game(text):
                 if event.type == Electroanim:
                     electroo.cheageimage()
                 if event.type == MoveEvil:
-                    Evil_sprites.update(gun_sprites, Evil_sprites, player)
+                    Evil_sprites.update(gun_sprites, Evil_sprites, player, AddEvil, AddEvil2)
                     for evil in Evil_sprites:
                         if evil.rect.x == 49 and (
                                 evil.rect.y == 371 or evil.rect.y == 391):
                             Evil_sprites.remove(evil)
                             MINUSHEART.play()
                             player.heart -= 1
-                    Evil2_sprites.update(gun_sprites, Evil2_sprites, player)
+                    Evil2_sprites.update(gun_sprites, Evil2_sprites, player, AddEvil, AddEvil2)
                     for evil2 in Evil2_sprites:
                         if evil2.rect.x == 52 and (
                                 evil2.rect.y == 372 or evil2.rect.y == 392):
@@ -832,7 +1073,6 @@ def game(text):
                         cur = con.cursor()
                         result = cur.execute("""SELECT player FROM Free_mode""").fetchall()
                         if text not in [i[0] for i in result]:
-                            print(1)
                             cur.execute(f"""INSERT
                                            INTO
                                            Free_mode(player, Best_Points, Last_points)
@@ -844,7 +1084,7 @@ def game(text):
                             if player.points > int(cur.execute(
                                     f"""SELECT Best_Points FROM Free_mode WHERE player = '{text}'""").fetchone()[
                                                        0]):
-                                cur.execute(f"""UPDATE fFree_mode
+                                cur.execute(f"""UPDATE Free_mode
                                                 SET Best_Points = {player.points}
                                                 WHERE player = '{text}'""")
                         con.commit()
@@ -899,6 +1139,7 @@ def game(text):
 
                 if event.type == MoveGun:
                     gun_sprites.update(gun_sprites)
+            print(V1, V2)
             backgroung_image.draw()
             player.draw()
             cityo.draw()
@@ -922,17 +1163,17 @@ def levels():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running_levels = False
-            level_1_sprite.update(event)
-            level_2_sprite.update(event)
-            back_sprite.update(event)
+            level1.update(event)
+            level2.update(event)
+            back.update(event)
             if return_to_menu:
                 return_to_menu = False
                 return
         backgroung_menu_image.draw()
         name_levels.draw()
-        level_1_sprite.draw(screen)
-        level_2_sprite.draw(screen)
-        back_sprite.draw(screen)
+        level1.draw()
+        level2.draw()
+        back.draw()
         pygame.display.flip()
         clock.tick(10000)
     pygame.quit()
@@ -949,24 +1190,132 @@ def name():
             if event.type == pygame.KEYDOWN:
                 keys = pygame.key.get_pressed()
                 if keys[13]:
-                    game(nicname)
+                    pre_Preview(nicname)
                     return_to_menu = True
                 elif keys[pygame.K_BACKSPACE]:
                     nicname = nicname[:-1]
-                elif len(nicname) < 30:
+                elif len(nicname) < 25:
                     nicname += event.unicode
-            back_sprite.update(event)
+
+            back.update(event)
             if return_to_menu:
                 return_to_menu = False
                 return
         backgroung_menu_image.draw()
-        font = pygame.font.Font(None, 50)
-        text = font.render(str("Введите имя"), 1, (0, 0, 0))
-        screen.blit(text, (400, 10))
-        font = pygame.font.Font(None, 50)
-        text = font.render(str(nicname), 1, (0, 0, 0))
-        screen.blit(text, (400, 100))
-        back_sprite.draw(screen)
+        font = pygame.font.Font("data/8693.ttf", 55)
+        text = font.render(str("Введите имя"), 1, (255, 229, 0))
+        screen.blit(pygame.transform.scale(load_image("menu/enter.png"), (200, 75)), (850, 600))
+        pygame.draw.lines(screen, (255, 229, 0), False, [(200, 450), (860, 450)])
+        screen.blit(text, (410, 10))
+        text = font.render(str(nicname), 1, (255, 229, 0))
+        screen.blit(text, (200, 400))
+        font = pygame.font.Font("data/8693.ttf", 20)
+        text = font.render(str("Подтвердить данные"), 1, (255, 229, 0))
+        screen.blit(text, (860, 675))
+        back.draw()
+        pygame.display.flip()
+        clock.tick(10000)
+    pygame.quit()
+
+
+def record():
+    free = True
+    check_right = False
+    check_left = False
+    global return_to_menu
+    running_levels = True
+    while running_levels:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running_levels = False
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.pos[1] < 47:
+                    if event.pos[0] < 552:
+                        free = True
+                    else:
+                        free = False
+            if event.type == pygame.MOUSEMOTION:
+                if event.pos[1] < 47:
+                    if event.pos[0] < 552:
+                        check_left = True
+                        check_right = False
+                    else:
+                        check_right = True
+                        check_left = False
+                else:
+                    check_right = False
+                    check_left = False
+            back.update(event)
+            if return_to_menu:
+                return_to_menu = False
+                return
+        backgroung_menu_image.draw()
+        font = pygame.font.Font("data/8693.ttf", 55)
+        font2 = pygame.font.Font("data/8693.ttf", 60)
+        if check_left:
+            text = font2.render(str("Свободный режим"), 1, (255, 229, 0))
+        else:
+            text = font.render(str("Свободный режим"), 1, (255, 229, 0))
+        screen.blit(text, (100, 0))
+        if check_right:
+            text = font2.render(str("Режим волн"), 1, (255, 229, 0))
+        else:
+            text = font.render(str("Режим волн"), 1, (255, 229, 0))
+        screen.blit(text, (650, 0))
+        back.draw()
+        con = sqlite3.connect("data/record.db")
+        cur = con.cursor()
+        font = pygame.font.Font("data/8693.ttf", 40)
+        y = 50
+        x = 0
+        text = font.render(str("Место"), 1, (255, 229, 0))
+        screen.blit(text, (x, y))
+        x += 150
+        text = font.render(str("НИКНЕЙМ"), 1, (255, 229, 0))
+        screen.blit(text, (x, y))
+        x += 425
+        text = font.render(str("ЛУЧШИЙ СЧЁТ"), 1, (255, 229, 0))
+        screen.blit(text, (x, y))
+        x += 225
+        text = font.render(str("ПОСЛЕДНИЙ СЧЁТ"), 1, (255, 229, 0))
+        screen.blit(text, (x, y))
+        if free:
+            y = 100
+            result = sorted(cur.execute("""SELECT * FROM Free_mode""").fetchall(),
+                            key=lambda x: int(-x[1]))
+            for i in range(10 if len(result) > 10 else len(result)):
+                x = 0
+                text = font.render(str(f"{i + 1}"), 1, (255, 229, 0))
+                screen.blit(text, (x, y))
+                x += 150
+                text = font.render(str(f"{result[i][0]}"), 1, (255, 229, 0))
+                screen.blit(text, (x, y))
+                x += 500
+                text = font.render(str(f"{result[i][1]}"), 1, (255, 229, 0))
+                screen.blit(text, (x, y))
+                x += 300
+                text = font.render(str(f"{result[i][2]}"), 1, (255, 229, 0))
+                screen.blit(text, (x, y))
+                y += 50
+        else:
+            y = 100
+            result = cur.execute("""SELECT * FROM Wave_mode""").fetchall()
+            for i in range(10 if len(result) > 10 else len(result)):
+                x = 0
+                text = font.render(str(f"{i + 1}"), 1, (255, 229, 0))
+                screen.blit(text, (x, y))
+                x += 150
+                text = font.render(str(f"{result[i][0]}"), 1, (255, 229, 0))
+                screen.blit(text, (x, y))
+                x += 500
+                text = font.render(str(f"{result[i][1]}"), 1, (255, 229, 0))
+                screen.blit(text, (x, y))
+                x += 300
+                text = font.render(str(f"{result[i][2]}"), 1, (255, 229, 0))
+                screen.blit(text, (x, y))
+                y += 50
+        con.commit()
+        con.close()
         pygame.display.flip()
         clock.tick(10000)
     pygame.quit()
@@ -976,33 +1325,27 @@ if __name__ == '__main__':
     name_menu = NameMenu()
     author_menu = AuthorMenu()
     name_levels = NameLevels()
-    end_menu_sprite = pygame.sprite.Group()
-    start_menu_sprite = pygame.sprite.Group()
-    StartMenu(start_menu_sprite)
-    EndMenu(end_menu_sprite)
-    records_sprite = pygame.sprite.Group()
-    Records(records_sprite)
-    level_1_sprite = pygame.sprite.Group()
-    level_2_sprite = pygame.sprite.Group()
-    back_sprite = pygame.sprite.Group()
+    startmenu = StartMenu()
+    endmenu = EndMenu()
+    records = Records()
     backgroung_menu_image = BackgroundMenu()
-    Level1(level_1_sprite)
-    Level2(level_2_sprite)
-    Back(back_sprite)
+    level1 = Level1()
+    level2 = Level2()
+    back = Back()
 
     while running_menu:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running_menu = False
-            start_menu_sprite.update(event)
-            end_menu_sprite.update(event)
-            records_sprite.update(event)
+            startmenu.update(event)
+            endmenu.update(event)
+            records.update(event)
         backgroung_menu_image.draw()
         name_menu.draw()
         author_menu.draw()
-        start_menu_sprite.draw(screen)
-        end_menu_sprite.draw(screen)
-        records_sprite.draw(screen)
+        startmenu.draw()
+        endmenu.draw()
+        records.draw()
         pygame.display.flip()
         clock.tick(10000)
     pygame.quit()
