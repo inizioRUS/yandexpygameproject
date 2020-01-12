@@ -4,6 +4,7 @@ from random import choice
 from math import asin, pi, sqrt, sin, cos, atan
 from PIL import Image, ImageFilter
 import sys
+import random
 
 ROAD = [[[1080, 120, -5, 0, 0], [320, 120, 3, 5, 1], [500, 420, -4, 5, 1],
          [436, 500, -3, -1, 0],
@@ -12,15 +13,18 @@ ROAD = [[[1080, 120, -5, 0, 0], [320, 120, 3, 5, 1], [500, 420, -4, 5, 1],
          [436, 520, -3, -1, 0],
          [49, 391, 0, 0, 0], [50, 392]]]
 ROAD2 = [[[1080, 120, -10, 0, 0], [320, 120, 6, 10, 1], [500, 420, -8, 10, 1],
-         [436, 500, -6, -2, 0],
-         [52, 372, 0, 0, 0], [50, 372]],
-        [[1080, 280, -10, 0, 0], [380, 280, 6, 8, 1], [500, 440, -8, 10, 1],
-         [436, 520, -6, -2, 0],
-         [52, 392, 0, 0, 0], [53, 393]]]
+          [436, 500, -6, -2, 0],
+          [52, 372, 0, 0, 0], [50, 372]],
+         [[1080, 280, -10, 0, 0], [380, 280, 6, 8, 1], [500, 440, -8, 10, 1],
+          [436, 520, -6, -2, 0],
+          [52, 392, 0, 0, 0], [53, 393]]]
 COOR_BUILD = [(250, 140), (360, 65), (500, 225), (800, 370), (575, 375),
               (250, 550), (220, 370),
               (310, 390)]
 V = 500
+V_E = 1
+Y = - 60
+X = - 45
 pygame.init()
 size = width, height = 1080, 720
 screen = pygame.display.set_mode(size)
@@ -199,9 +203,12 @@ class Evil(pygame.sprite.Sprite):
     image = pygame.transform.flip(image, True, False)
     image2 = pygame.transform.flip(image2, True, False)
 
-    def __init__(self):
+    def __init__(self, *args):
         super().__init__(Evil_sprites)
-        self.coords = ROAD[choice([0, 1])]
+        if args:
+            self.coords = args[0]
+        else:
+            self.coords = ROAD[choice([0, 1])]
         self.pos = 0
         self.hp = 70
         self.image1 = Evil.image
@@ -233,16 +240,23 @@ class Evil(pygame.sprite.Sprite):
 
 
 class Evil2(pygame.sprite.Sprite):
-    image = load_image('Evil2/evil.jpg', (255, 255, 255))
-    image2 = load_image('Evil2/evil2.jpg', (255, 255, 255))
+    image = load_image('Evil2/evil.png', (255, 255, 255))
+    image2 = load_image('Evil2/evil2.png', (255, 255, 255))
     image = pygame.transform.scale(image, (105, 70))
     image2 = pygame.transform.scale(image2, (105, 70))
     image = pygame.transform.flip(image, True, False)
     image2 = pygame.transform.flip(image2, True, False)
 
-    def __init__(self):
+    def __init__(self, *args):
         super().__init__(Evil2_sprites)
-        self.coords = ROAD2[choice([0, 1])]
+        if args:
+            self.coords = args[0]
+            self.coords = list(
+                map(lambda x: [x[0], x[1], x[2] * 2, x[3] * 2, x[4]],
+                    self.coords))
+            print(self.coords)
+        else:
+            self.coords = ROAD2[choice([0, 1])]
         self.pos = 0
         self.hp = 30
         self.image1 = Evil2.image
@@ -254,8 +268,10 @@ class Evil2(pygame.sprite.Sprite):
 
     def update(self):
         self.image = self.image2 if self.image == self.image1 else self.image1
-        if self.rect.x == self.coords[self.pos + 1][0] and self.rect.y == \
-                self.coords[self.pos + 1][1]:
+        if (self.rect.x == self.coords[self.pos + 1][0] or self.rect.x ==
+            self.coords[self.pos + 1][0] - 1) and (
+                self.rect.y == self.coords[self.pos + 1][1] or self.rect.y ==
+                self.coords[self.pos + 1][1] - 1):
             self.pos += 1
             self.rect.x, self.rect.y, self.d_x, self.d_y, flip = self.coords[
                 self.pos]
@@ -339,7 +355,7 @@ class Exit(pygame.sprite.Sprite):
         self.image = Exit.exit_btn
         self.rect = self.image.get_rect()
         self.rect.x = 475
-        self.rect.y = 525
+        self.rect.y = 535
 
     def get_click(self, pos):
         if self.rect.x <= pos[0] and self.rect.y <= pos[1] and self.rect.x + \
@@ -354,8 +370,13 @@ class Backgroung:
         self.image = load_image("fonmain.png")
         self.image = pygame.transform.scale(self.image, (1080, 720))
 
-    def draw(self):
-        screen.blit(self.image, (0, 0))
+    def draw(self, clear=False):
+        if clear:
+            self.image = load_image("background.jpg")
+            self.image = pygame.transform.scale(self.image, (1080, 720))
+            screen.blit(self.image, (0, 0))
+        else:
+            screen.blit(self.image, (0, 0))
 
 
 class City:
@@ -489,7 +510,7 @@ class StartMenu(pygame.sprite.Sprite):
     def update(self, *args):
         if args and args[
             0].type == pygame.MOUSEMOTION and self.rect.collidepoint(
-                args[0].pos):
+            args[0].pos):
             self.image = pygame.transform.scale(StartMenu.image_start,
                                                 (400, 200))
         elif args and args[
@@ -515,7 +536,7 @@ class EndMenu(pygame.sprite.Sprite):
     def update(self, *args):
         if args and args[
             0].type == pygame.MOUSEMOTION and self.rect.collidepoint(
-                args[0].pos):
+            args[0].pos):
             self.image = pygame.transform.scale(EndMenu.image_end,
                                                 (400, 200))
         elif args and args[
@@ -542,7 +563,7 @@ class Records(pygame.sprite.Sprite):
     def update(self, *args):
         if args and args[
             0].type == pygame.MOUSEMOTION and self.rect.collidepoint(
-                args[0].pos):
+            args[0].pos):
             self.image = pygame.transform.scale(Records.image_records,
                                                 (400, 200))
         else:
@@ -573,12 +594,12 @@ class Level1(pygame.sprite.Sprite):
     def update(self, *args):
         if args and args[
             0].type == pygame.MOUSEMOTION and self.rect.collidepoint(
-                args[0].pos):
+            args[0].pos):
             self.image = pygame.transform.scale(Level1.image_level_1,
                                                 (400, 200))
         elif args and args[
             0].type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(
-                args[0].pos):
+            args[0].pos):
             game()
         else:
             self.image = pygame.transform.scale(Level1.image_level_1,
@@ -600,7 +621,7 @@ class Back(pygame.sprite.Sprite):
         global return_to_menu
         if args and args[
             0].type == pygame.MOUSEMOTION and self.rect.collidepoint(
-                args[0].pos):
+            args[0].pos):
             self.image = pygame.transform.scale(Back.image_back,
                                                 (400, 200))
         elif args and args[
@@ -613,7 +634,7 @@ class Back(pygame.sprite.Sprite):
 
 
 class Level2(pygame.sprite.Sprite):
-    image_level_2 = load_image('level2.png', (255, 255, 255))
+    image_level_2 = load_image('creative.png', (255, 255, 255))
     image_level_2 = pygame.transform.scale(image_level_2, (300, 150))
 
     def __init__(self, group):
@@ -626,16 +647,85 @@ class Level2(pygame.sprite.Sprite):
     def update(self, *args):
         if args and args[
             0].type == pygame.MOUSEMOTION and self.rect.collidepoint(
-                args[0].pos):
+            args[0].pos):
             self.image = pygame.transform.scale(Level2.image_level_2,
                                                 (400, 200))
+        elif args and args[
+            0].type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(
+            args[0].pos):
+            draw_level('gdf')
         else:
             self.image = pygame.transform.scale(Level2.image_level_2,
                                                 (300, 150))
 
 
-towers = []
+class Road(pygame.sprite.Sprite):
+    horizontal_image = load_image('create_road/stright_.png', (255, 255, 255))
+    vertical_image = load_image('create_road/stright_.png', (255, 255, 255))
+    vertical_image = pygame.transform.rotate(vertical_image, 90)
+    rotate_image = load_image('create_road/rotate_new.png', (255, 255, 255))
+
+    def __init__(self, mod, x1, y1, x2=0, y2=0, rotate=0, road='left'):
+        if mod == 'h':
+            super().__init__(road_sprites_horizontal)
+            self.image = Road.horizontal_image
+            self.rect = self.image.get_rect()
+            self.image = pygame.transform.scale(self.image,
+                                                (x2 - x1, self.rect.h))
+            self.rect.x = x1
+            self.rect.y = y1 - self.rect.h // 2
+        elif mod == 'v':
+            super().__init__(road_sprites_vertical)
+            self.image = Road.vertical_image
+            self.rect = self.image.get_rect()
+            self.image = pygame.transform.scale(self.image,
+                                                (self.rect.w, y2 - y1))
+            if road == 'left':
+                self.rect.x = x1 - self.rect.w // 2
+                self.rect.y = y1
+            else:
+                self.rect.x = x2 - self.rect.w // 2
+                self.rect.y = y1
+
+        elif mod == 'r':
+            super().__init__(road_sprites_rotate)
+            self.image = Road.rotate_image
+            self.rect = self.image.get_rect()
+            if rotate == 180:
+                self.image = pygame.transform.rotate(self.image, 180)
+                self.rect.x, self.rect.y = x1 - self.rect.w * 0.75, y1 - self.rect.h * 0.75
+            elif rotate == 0:
+                self.rect.x, self.rect.y = x1 - self.rect.w * 0.25, y1 - self.rect.h * 0.25
+            elif rotate == 270:
+                self.image = pygame.transform.rotate(self.image, 270)
+                self.rect.x, self.rect.y = x1 - self.rect.w * 0.7, y1 - self.rect.h * 0.25
+            elif rotate == 90:
+                self.image = pygame.transform.rotate(self.image, 90)
+                self.rect.x, self.rect.y = x1 - self.rect.w * 0.22, y1 - self.rect.h * 0.8
+
+
+class Tree(pygame.sprite.Sprite):
+    image = load_image('trees.png', (255, 255, 255))
+    image = pygame.transform.scale(image, (75, 150))
+
+    def __init__(self):
+        super().__init__(trees_sprite)
+        self.image = Tree.image
+        self.rect = self.image.get_rect()
+        self.rect.x = random.randrange(250, size[0] - self.rect.w)
+        self.rect.y = random.randrange(size[1] - self.rect.h)
+
+        while pygame.sprite.spritecollideany(self,
+                                             road_sprites_horizontal) or pygame.sprite.spritecollideany(
+                self, road_sprites_rotate) or pygame.sprite.spritecollideany(
+                self, road_sprites_vertical) or pygame.sprite.spritecollideany(
+                self, tower_sprites_1):
+            self.rect.x = random.randrange(250, size[0] - self.rect.w)
+            self.rect.y = random.randrange(size[1] - self.rect.h)
+
+
 evils = []
+towers = []
 tower_sprites_1 = pygame.sprite.Group()
 backgroung_image = Backgroung()
 backgroung_menu_image = BackgroundMenu()
@@ -651,6 +741,10 @@ Records(records_sprite)
 level_1_sprite = pygame.sprite.Group()
 level_2_sprite = pygame.sprite.Group()
 back_sprite = pygame.sprite.Group()
+road_sprites_horizontal = pygame.sprite.Group()
+road_sprites_vertical = pygame.sprite.Group()
+road_sprites_rotate = pygame.sprite.Group()
+trees_sprite = pygame.sprite.Group()
 Level1(level_1_sprite)
 Level2(level_2_sprite)
 Back(back_sprite)
@@ -663,7 +757,7 @@ Electroanim = 3
 Buildanim = 10
 MoveEvil = 30
 AddEvil = 28
-
+MoveEvil2 = 26
 AddEvil2 = 18
 player = Player()
 Evil_sprites = pygame.sprite.Group()
@@ -672,9 +766,6 @@ menu = pygame.sprite.Group()
 menu_pause = pygame.sprite.Group()
 menu_restart = pygame.sprite.Group()
 menu_exit = pygame.sprite.Group()
-a = Evil()
-evils.append(a)
-Evil2()
 gun_sprites = pygame.sprite.Group()
 Hit = 29
 MoveGun = 27
@@ -715,7 +806,7 @@ def game():
     pygame.time.set_timer(Cityanim, 1000)
     pygame.time.set_timer(Seaanim, 2000)
     pygame.time.set_timer(Electroanim, 100)
-    pygame.time.set_timer(MoveEvil, 200)
+    pygame.time.set_timer(MoveEvil, 400)
     pygame.time.set_timer(AddEvil, 20000)
     pygame.time.set_timer(AddEvil2, 10000)
     pygame.time.set_timer(Buildanim, 1000)
@@ -760,6 +851,7 @@ def game():
                 seao = Sea()
                 player = Player()
                 Evil_sprites = pygame.sprite.Group()
+                Evil2_sprites = pygame.sprite.Group()
                 menu = pygame.sprite.Group()
                 menu_pause = pygame.sprite.Group()
                 menu_restart = pygame.sprite.Group()
@@ -884,6 +976,285 @@ def levels():
         level_1_sprite.draw(screen)
         level_2_sprite.draw(screen)
         back_sprite.draw(screen)
+        pygame.display.flip()
+        clock.tick(10000)
+    pygame.quit()
+
+
+def draw_level(name_file):
+    im = Image.open('data/test1.png')
+    pixels = im.load()
+    x, y = im.size
+    points = []
+    evil_points = []
+    tower_coords = []
+    for i in range(x):
+        for j in range(y):
+            if pixels[i, j][0] == pixels[i, j][1] == pixels[i, j][2] == 0:
+                points.append((i, j))
+            elif pixels[i, j][0] == 255 and pixels[i, j][1] == pixels[i, j][
+                2] == 0:
+                points.insert(0, (i, j))
+            elif pixels[i, j][0] == 255 and pixels[i, j][1] == 255 and \
+                    pixels[i, j][2] == 0:
+                tower_coords.append((i - 25, j - 25))
+    C_end = (64, 440)
+    points.append(C_end)
+    k = len(points) - 1
+    C = points[0]
+    evil_points.append(C)
+
+    for i in range(k):
+        min_s = 0
+        min_point = None
+        x1, y1 = C
+        for point in points:
+            x2, y2 = point
+            if x1 != x2 or y1 != y2:
+                s = (x2 - x1) ** 2 + (y2 - y1) ** 2
+                if s < min_s or min_s == 0:
+                    min_s = s
+                    min_point = point
+        x2, y2 = min_point
+
+        if x1 < x2 and y1 < y2:
+            Road('h', x1, y1, x2, y2)
+            Road('v', x1, y1, x2, y2, road='right')
+            Road('r', x2, y1, rotate=270)
+            Road('r', x2, y2, rotate=90)
+            evil_points.append((x2 + X, y1 + Y, 0, V_E, 0))
+            evil_points.append((x2 + X, y2 + Y, V_E, 0, 0))
+
+        elif x2 < x1 and y2 > y1:
+            Road('h', x2, y2, x1, y1)
+            Road('v', x1, y1, x2, y2)
+            Road('r', x1, y2, rotate=180)
+            Road('r', x1, y1, rotate=0)
+            evil_points.append((x1 + X, y1 + Y, 0, V_E, 0))
+            evil_points.append((x1 + X, y2 + Y, - V_E, 0, 0))
+
+        elif x1 < x2 and y1 > y2:
+            Road('h', x1, y1, x2, y2)
+            Road('v', x2, y2, x1, y1)
+            Road('r', x2, y1, rotate=180)
+            Road('r', x2, y2, rotate=0)
+            evil_points.append((x2 + X, y1 + Y, 0, - V_E, 0))
+            evil_points.append((x2 + X, y2 + Y, V_E, 0, 0))
+
+        elif x2 < x1 and y2 < y1:
+            Road('h', x2, y2, x1, y1)
+            Road('v', x2, y2, x1, y1, road='right')
+            Road('r', x1, y2, rotate=270)
+            Road('r', x2, y2, rotate=90)
+            evil_points.append((x1 + X, y2 + Y, - V_E, 0, 0))
+            evil_points.append((x2 + X, y2 + Y, 0, - V_E, 0))
+
+        if points:
+            points.remove(C)
+        C = min_point
+
+    evil_points.append((C_end[0] + X, C_end[1] + Y, 0, 0, 0))
+    evil_points.append((C_end[0] + 1 + X, C_end[1] + 1 + Y, 0, 0, 0))
+    x1, y1 = evil_points[0]
+    x2, y2 = evil_points[1][0], evil_points[1][1]
+    print(evil_points[0], evil_points[1])
+    print(x1, y1, x2, y2)
+    if x1 <= x2 and y1 <= y2:
+        evil_points[0] = (x1 + X, y1 + Y, V_E, 0, 0)
+    elif x1 <= x2 and y1 >= y2:
+        evil_points[0] = (x1 + X, y1 + Y, V_E, 0, 0)
+    if x1 >= x2 and y1 <= y2:
+        evil_points[0] = (x1 + X, y1 + Y, - V_E, 0, 0)
+    if x1 >= x2 and y1 >= y2:
+        evil_points[0] = (x1 + X, y1 + Y, 0, - V_E, 0)
+    print(evil_points)
+
+    global check_pause
+    global check_restart
+    global check_pause_draw
+    global menu_restart
+    global menu
+    global menu_pause
+    global Evil_sprites
+    global Evil2_sprites
+    global cityo
+    global towers
+    global seao
+    global evils
+    global electroo
+    global player
+    global backgroung_image
+    global tower_sprites_1
+    global gun_sprites
+    global check_exit
+    global menu_exit
+    global trees_sprite
+    towers = []
+    tower_sprites_1 = pygame.sprite.Group()
+    trees_sprite = pygame.sprite.Group()
+    for i in range(len(tower_coords)):
+        a = Tower_and_build(tower_sprites_1, tower_coords[i])
+        towers.append(a)
+    for i in range(20 // k):
+        Tree()
+    pygame.time.set_timer(Cityanim, 1000)
+    pygame.time.set_timer(Seaanim, 2000)
+    pygame.time.set_timer(Electroanim, 100)
+    pygame.time.set_timer(MoveEvil, 200)
+    pygame.time.set_timer(AddEvil, 20000)
+    pygame.time.set_timer(AddEvil2, 10000)
+    pygame.time.set_timer(Buildanim, 1000)
+    pygame.time.set_timer(Hit, 1000)
+    pygame.time.set_timer(MoveGun, 5)
+    pygame.time.set_timer(MoveEvil2, 150)
+    running = True
+    while running:
+        if check_pause:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1:
+                        for i in menu_pause:
+                            check_pause = i.get_click(event.pos)
+                        for i in menu_restart:
+                            check_restart = i.get_click(event.pos)
+                            if check_restart:
+                                check_pause = False
+                        for i in menu_exit:
+                            check_exit = i.get_click(event.pos)
+                            if check_exit:
+                                check_pause = False
+            if check_pause_draw:
+                screen.blit(load_image("fon_pause.png"), (0, 0))
+                font = pygame.font.Font(None, 50)
+                text = font.render(str("Menu"), 1, (0, 0, 0))
+                screen.blit(text, (500, 10))
+                check_pause_draw = False
+            menu_pause.draw(screen)
+            menu_restart.draw(screen)
+            menu_exit.draw(screen)
+        else:
+            if check_restart or check_exit:
+                towers = []
+                evils = []
+                tower_sprites_1 = pygame.sprite.Group()
+                backgroung_image = Backgroung()
+                cityo = City()
+                electroo = Electro()
+                seao = Sea()
+                player = Player()
+                Evil_sprites = pygame.sprite.Group()
+                Evil2_sprites = pygame.sprite.Group()
+                menu = pygame.sprite.Group()
+                menu_pause = pygame.sprite.Group()
+                menu_restart = pygame.sprite.Group()
+                gun_sprites = pygame.sprite.Group()
+                towers = []
+                tower_sprites_1 = pygame.sprite.Group()
+                for i in range(len(tower_coords)):
+                    a = Tower_and_build(tower_sprites_1, tower_coords[i])
+                    towers.append(a)
+                Pause(menu)
+                Continue(menu_pause)
+                Restart(menu_restart)
+                check_pause = False
+                check_restart = False
+                check_pause_draw = True
+                if check_exit:
+                    check_exit = False
+                    return
+            check_pause_draw = True
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                if event.type == Cityanim:
+                    cityo.cheageimage()
+                if event.type == Seaanim:
+                    seao.cheageimage()
+                if event.type == Electroanim:
+                    electroo.cheageimage()
+                if event.type == MoveEvil:
+                    Evil_sprites.update()
+                    for evil in Evil_sprites:
+                        if (evil.rect.x, evil.rect.y) == (
+                                evil_points[- 2][0], evil_points[-2][1]):
+                            Evil_sprites.remove(evil)
+                            player.heart -= 1
+
+                if event.type == MoveEvil2:
+                    Evil2_sprites.update()
+                    for evil2 in Evil2_sprites:
+                        if (evil2.rect.x == evil_points[-2][
+                            0] or evil2.rect.x == evil_points[-1][0]) and (
+                                evil2.rect.y == evil_points[-2][
+                            1] or evil2.rect.y == evil_points[-1][1]):
+                            Evil2_sprites.remove(evil2)
+                            player.heart -= 1
+                if event.type == AddEvil:
+                    a = Evil(evil_points)
+                    evils.append(a)
+                if event.type == AddEvil2:
+                    Evil2(evil_points)
+                if event.type == Buildanim:
+                    for i in towers:
+                        i.builds()
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1:
+                        for i in towers:
+                            i.get_click(event.pos)
+                        for i in menu:
+                            check_pause = i.get_click(event.pos)
+                if event.type == pygame.MOUSEMOTION:
+                    for i in towers:
+                        i.check_change(event.pos)
+                if event.type == Hit:
+                    for build in tower_sprites_1:
+                        if build.built:
+                            hit_done = False
+                            x1, y1 = build.rect.x, build.rect.y
+                            for evil in Evil_sprites:
+                                x2, y2 = evil.rect.x, evil.rect.y
+                                if (x2 - x1) ** 2 + (y2 - y1) ** 2 <= 30000:
+                                    angle = count_coords(x1 + 20, y1 + 20,
+                                                         x2 + 30,
+                                                         y2 + 30)
+                                    if angle:
+                                        Gun(gun_sprites, x1 + 20, y1 + 20,
+                                            angle)
+                                        hit_done = True
+                                        break
+                            if not hit_done:
+                                for evil2 in Evil2_sprites:
+                                    x2, y2 = evil2.rect.x, evil2.rect.y
+                                    if (x2 - x1) ** 2 + (
+                                            y2 - y1) ** 2 <= 30000:
+                                        angle = count_coords(x1 + 20, y1 + 20,
+                                                             x2 + 30,
+                                                             y2 + 30)
+                                        if angle:
+                                            Gun(gun_sprites, x1 + 20, y1 + 20,
+                                                angle)
+                                            break
+
+                if event.type == MoveGun:
+                    gun_sprites.update()
+            backgroung_image.draw(True)
+            road_sprites_horizontal.draw(screen)
+            road_sprites_vertical.draw(screen)
+            road_sprites_rotate.draw(screen)
+
+            player.draw()
+            cityo.draw()
+            seao.draw()
+            electroo.draw()
+            Evil_sprites.draw(screen)
+            Evil2_sprites.draw(screen)
+            gun_sprites.draw(screen)
+            trees_sprite.draw(screen)
+            tower_sprites_1.draw(screen)
+            menu.draw(screen)
+            tower_sprites_1.update()
         pygame.display.flip()
         clock.tick(10000)
     pygame.quit()
