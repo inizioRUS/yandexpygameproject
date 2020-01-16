@@ -52,6 +52,7 @@ check_restart = False
 check_exit = False
 return_to_menu = False
 
+screen_rect = (0, 0, width, height)
 
 def load_image(name, colorkey=None):
     fullname = os.path.join('data', name)
@@ -90,7 +91,23 @@ def count_coords(x1, y1, x2, y2):
     d_types = {1: 2 * pi - angle, 2: pi + angle, 3: pi - angle, 4: angle}
     return d_types[typ]
 
+class Particle(pygame.sprite.Sprite):
+    def __init__(self, pos, dx, dy):
+        super().__init__(particles)
+        self.image = pygame.transform.scale(random.choice([load_image("nuol.png"), load_image("one.png")]), (20, 20))
+        self.rect = self.image.get_rect()
 
+        self.velocity = [dx, dy]
+        self.rect.x, self.rect.y = pos
+
+        self.gravity = 1
+
+    def update(self):
+        self.velocity[1] += self.gravity
+        self.rect.x += self.velocity[0]
+        self.rect.y += self.velocity[1]
+        if not self.rect.colliderect(screen_rect):
+            self.kill()
 class Game_over_anim:
     image = load_image('game_over_image.png')
     image = pygame.transform.scale(image, (1080, 720))
@@ -113,7 +130,7 @@ class Game_over_anim:
 
 class Player:
     def __init__(self):
-        self.heart = 1
+        self.heart = 10
         self.money = 200
         self.points = 0
         self.image_heart = load_image('menu_in_game/heart.png', (255, 255, 255))
@@ -1251,7 +1268,9 @@ def game(nicname):
 def levels():
     global MUSIC_check
     global return_to_menu
+    global particles
     running_levels = True
+    particles = pygame.sprite.Group()
     while running_levels:
         if not (MUSIC_check):
             MUSIC.play()
@@ -1259,6 +1278,8 @@ def levels():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running_levels = False
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                create_particles(pygame.mouse.get_pos())
             level1.update(event)
             level2.update(event)
             back.update(event)
@@ -1269,6 +1290,8 @@ def levels():
         name_levels.draw()
         level1.draw()
         level2.draw()
+        particles.update()
+        particles.draw(screen)
         back.draw()
         pygame.display.flip()
         clock.tick(10000)
@@ -1360,16 +1383,19 @@ def input_file(nicname):
 
 
 def record():
+    global particles
+    global return_to_menu
     free = True
     check_right = False
     check_left = False
-    global return_to_menu
     running_levels = True
+    particles = pygame.sprite.Group()
     while running_levels:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running_levels = False
             if event.type == pygame.MOUSEBUTTONDOWN:
+                create_particles(pygame.mouse.get_pos())
                 if event.pos[1] < 47:
                     if event.pos[0] < 552:
                         free = True
@@ -1391,6 +1417,8 @@ def record():
                 return_to_menu = False
                 return
         backgroung_menu_image.draw()
+        particles.update()
+        particles.draw(screen)
         font = pygame.font.Font("data/8693.ttf", 55)
         font2 = pygame.font.Font("data/8693.ttf", 60)
         if check_left:
@@ -1809,9 +1837,15 @@ def draw_level(name_file, nicname):
             tower_sprites_1.update()
         pygame.display.flip()
         clock.tick(10000)
+
     pygame.quit()
-
-
+def create_particles(position):
+    # количество создаваемых частиц
+    particle_count = 2
+    # возможные скорости
+    numbers = range(-5, 6)
+    for _ in range(particle_count):
+        Particle(position, random.choice(numbers), random.choice(numbers))
 if __name__ == '__main__':
     name_menu = NameMenu()
     author_menu = AuthorMenu()
@@ -1823,7 +1857,7 @@ if __name__ == '__main__':
     level1 = Level1()
     level2 = Level2()
     back = Back()
-
+    particles = pygame.sprite.Group()
     while running_menu:
         if not (MUSIC_check):
             MUSIC.play()
@@ -1831,10 +1865,14 @@ if __name__ == '__main__':
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running_menu = False
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                create_particles(pygame.mouse.get_pos())
             startmenu.update(event)
             endmenu.update(event)
             records.update(event)
+        particles.update()
         backgroung_menu_image.draw()
+        particles.draw(screen)
         name_menu.draw()
         author_menu.draw()
         startmenu.draw()
