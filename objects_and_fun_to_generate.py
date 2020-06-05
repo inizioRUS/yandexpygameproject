@@ -63,51 +63,57 @@ class Tree(pygame.sprite.Sprite):
             self.rect.y = random.randrange(size[1] - self.rect.h)
 
 
-def draw_level(name_file, nicname, Image, X, Y, V_E, game, Tower_and_build, Tree, size,
+def draw_level(nicname, Image, X, Y, V_E, game, Tower_and_build, Tree, size,
                Backgroung, City, screen, Electro, Sea, Player, Pause,
                Continue, Restart, Exit, Evil, choice, Evil2, ROAD2, V1, V2,
-               Game_over_anim, clock, Gun, V, ROAD, sound):
+               Game_over_anim, clock, Gun, V, ROAD, sound, points, tower_coords):
+    print('ok')
     sound['MUSIC'].stop()
-    im = Image.open(f'data/{name_file}')
-    pixels = im.load()
-    x, y = im.size
-    points = []
+    # im = Image.open(f'data/{name_file}')
+    # pixels = im.load()
+    # x, y = im.size
+    # points = []
     road_sprites_horizontal = pygame.sprite.Group()
     road_sprites_vertical = pygame.sprite.Group()
     trees_sprite = pygame.sprite.Group()
     road_sprites_rotate = pygame.sprite.Group()
     evil_points = []
-    tower_coords = []
-    for i in range(x):
-        for j in range(y):
-            if pixels[i, j][0] == pixels[i, j][1] == pixels[i, j][2] == 0:
-                points.append((i, j))
-            elif pixels[i, j][0] == 255 and pixels[i, j][1] == pixels[i, j][
-                2] == 0:
-                points.insert(0, (i, j))
-            elif pixels[i, j][0] == 255 and pixels[i, j][1] == 255 and \
-                    pixels[i, j][2] == 0:
-                tower_coords.append((i - 25, j - 25))
+    # tower_coords = []
+    # for i in range(x):
+    #     for j in range(y):
+    #         if pixels[i, j][0] == pixels[i, j][1] == pixels[i, j][2] == 0:
+    #             points.append((i, j))
+    #         elif pixels[i, j][0] == 255 and pixels[i, j][1] == pixels[i, j][
+    #             2] == 0:
+    #             points.insert(0, (i, j))
+    #         elif pixels[i, j][0] == 255 and pixels[i, j][1] == 255 and \
+    #                 pixels[i, j][2] == 0:
+    #             tower_coords.append((i - 25, j - 25))
     C_end = (64, 440)
-    points.append(C_end)
+    # points.append(C_end)
     k = len(points) - 1
+    points.sort(key=lambda x: -x[0])
     C = points[0]
     evil_points.append(C)
+    x1, y1 = points[0]
 
-    for i in range(k):
-        min_s = 0
-        min_point = None
-        x1, y1 = C
-        for point in points:
-            x2, y2 = point
-            if x1 != x2 or y1 != y2:
-                s = (x2 - x1) ** 2 + (y2 - y1) ** 2
-                if s < min_s or min_s == 0:
-                    min_s = s
-                    min_point = point
-        x2, y2 = min_point
+    for i in range(1, len(points)):
+        # min_s = 0
+        # min_point = None
+        # x1, y1 = C
+        # for point in points:
+        #     x2, y2 = point
+        #     if x1 != x2 or y1 != y2:
+        #         s = (x2 - x1) ** 2 + (y2 - y1) ** 2
+        #         if s < min_s or min_s == 0:
+        #             min_s = s
+        #             min_point = point
+        # x2, y2 = min_point
+        x2, y2 = points[i]
+
 
         if x1 < x2 and y1 < y2:
+            print(1)
             Road(road_sprites_horizontal, road_sprites_vertical, road_sprites_rotate, 'h', x1, y1,
                  x2, y2)
             Road(road_sprites_horizontal, road_sprites_vertical, road_sprites_rotate, 'v', x1, y1,
@@ -120,6 +126,7 @@ def draw_level(name_file, nicname, Image, X, Y, V_E, game, Tower_and_build, Tree
             evil_points.append((x2 + X, y2 + Y, V_E, 0, 0))
 
         elif x2 < x1 and y2 > y1:
+            print(3)
             Road(road_sprites_horizontal, road_sprites_vertical, road_sprites_rotate, 'h', x2, y2,
                  x1, y1)
             Road(road_sprites_horizontal, road_sprites_vertical, road_sprites_rotate, 'v', x1, y1,
@@ -144,20 +151,22 @@ def draw_level(name_file, nicname, Image, X, Y, V_E, game, Tower_and_build, Tree
             evil_points.append((x2 + X, y2 + Y, V_E, 0, 0))
 
         elif x2 < x1 and y2 < y1:
+            print(2)
             Road(road_sprites_horizontal, road_sprites_vertical, road_sprites_rotate, 'h', x2, y2,
                  x1, y1)
             Road(road_sprites_horizontal, road_sprites_vertical, road_sprites_rotate, 'v', x2, y2,
                  x1, y1, road='right')
-            Road(road_sprites_horizontal, road_sprites_vertical, road_sprites_rotate, 'r', x1, y2,
-                 rotate=270)
-            Road(road_sprites_horizontal, road_sprites_vertical, road_sprites_rotate, 'r', x2, y2,
+            Road(road_sprites_horizontal, road_sprites_vertical, road_sprites_rotate, 'r', x1, y1,
                  rotate=90)
+            Road(road_sprites_horizontal, road_sprites_vertical,
+                 road_sprites_rotate, 'r', x1, y2,
+                 rotate=270)
             evil_points.append((x1 + X, y2 + Y, - V_E, 0, 0))
-            evil_points.append((x2 + X, y2 + Y, 0, - V_E, 0))
+            evil_points.append((x1 + X, y1 + Y, 0, - V_E, 0))
 
-        if points:
-            points.remove(C)
-        C = min_point
+        # if points:
+        #     points.remove(C)
+        x1, y1 = x2, y2
 
     evil_points.append((C_end[0] + X, C_end[1] + Y, 0, 0, 0))
     evil_points.append((C_end[0] + 1 + X, C_end[1] + 1 + Y, 0, 0, 0))

@@ -3,6 +3,45 @@ import pygame
 from secondary_functions import *
 
 
+class SignRoad(pygame.sprite.Sprite):
+    def __init__(self, group):
+        super().__init__(group)
+        self.image = pygame.transform.scale(load_image("sign_road.png"),
+                                            (100, 100))
+        self.rect = self.image.get_rect()
+        self.rect.x = 700
+        self.rect.y = 600
+        self.down = False
+        self.d_x = 0
+        self.d_y = 0
+
+    def get_click(self, pos):
+        if self.rect.x <= pos[0] and self.rect.y <= pos[1] and self.rect.x + \
+                self.rect.size[0] >= \
+                pos[0] and self.rect.y + self.rect.size[1] >= pos[1]:
+            return False
+        return True
+
+
+class SignBuild(pygame.sprite.Sprite):
+    def __init__(self, group):
+        super().__init__(group)
+        self.image = pygame.transform.scale(load_image("sign_build.png"),
+                                            (100, 100))
+        self.rect = self.image.get_rect()
+        self.rect.x = 600
+        self.rect.y = 600
+        self.down = False
+        self.d_x = 0
+        self.d_y = 0
+
+    def get_click(self, pos):
+        if self.rect.x <= pos[0] and self.rect.y <= pos[1] and self.rect.x + \
+                self.rect.size[0] >= \
+                pos[0] and self.rect.y + self.rect.size[1] >= pos[1]:
+            return False
+        return True
+
 def levels(create_particles, level1, level2, name, back, Particle, backgroung_menu_image,
            screen, name_levels, screen_rect, clock, MUSIC_check, pre_Preview, input_file,
            draw_level, Image, X, Y, V_E, game, Backgroung, City, Electro, Sea, Tower_and_build,
@@ -70,7 +109,7 @@ def name(level, pre_Preview, input_file, back, backgroung_menu_image, screen, cl
                                     Gun, V, ROAD, sound)
                         return_to_menu = True
                     else:
-                        input_file(nicname, draw_level, back, screen, backgroung_menu_image, clock,
+                        map_editor(nicname, draw_level, back, screen, backgroung_menu_image, clock,
                                    Image, X, Y,
                                    V_E, game, Tower_and_build, Tree,
                                    size, Backgroung, City, Electro, Sea, Player, Pause,
@@ -146,6 +185,119 @@ def input_file(nicname, draw_level, back, screen, backgroung_menu_image, clock, 
         pygame.display.flip()
         clock.tick(10000)
     pygame.quit()
+
+
+def map_editor(nicname, draw_level, back, screen, backgroung_menu_image, clock, Image, X, Y,
+               V_E, game, Tower_and_build, Tree,
+               size, Backgroung, City, Electro, Sea, Player, Pause,
+               Continue, Restart, Exit, Evil, choice, Evil2, ROAD2, V1, V2,
+               Game_over_anim,  Gun, V,
+               ROAD, sound):
+    backgroung_image = Backgroung()
+    cityo = City(screen)
+    electroo = Electro(screen)
+    seao = Sea(screen)
+    Cityanim = 1
+    Seaanim = 2
+    Electroanim = 3
+    sign_road_sprite = pygame.sprite.Group()
+    sign_build_sprite = pygame.sprite.Group()
+    for _ in range(2):
+        SignRoad(sign_road_sprite)
+    for _ in range(5):
+        SignBuild(sign_build_sprite)
+    pygame.time.set_timer(Cityanim, 1000)
+    pygame.time.set_timer(Seaanim, 2000)
+    pygame.time.set_timer(Electroanim, 100)
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type == Cityanim:
+                cityo.cheageimage()
+            if event.type == Seaanim:
+                seao.cheageimage()
+            if event.type == Electroanim:
+                electroo.cheageimage()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                for sign in sign_road_sprite:
+                    if sign.rect.x <= event.pos[0] <= sign.rect.x + sign.rect.width and sign.rect.y <= event.pos[
+                        1] <= sign.rect.y + sign.rect.height:
+                        sign.d_x = event.pos[0] - sign.rect.x
+                        sign.d_y = event.pos[1] - sign.rect.y
+                        sign.down = True
+                        break
+                for sign in sign_build_sprite:
+                    if sign.rect.x <= event.pos[0] <= sign.rect.x + sign.rect.width and sign.rect.y <= event.pos[
+                        1] <= sign.rect.y + sign.rect.height:
+                        sign.d_x = event.pos[0] - sign.rect.x
+                        sign.d_y = event.pos[1] - sign.rect.y
+                        sign.down = True
+                        break
+            if event.type == pygame.MOUSEBUTTONUP:
+                for sign in sign_road_sprite:
+                    if sign.down:
+                        sign.rect.x = event.pos[0] - sign.d_x
+                        sign.rect.y = event.pos[1] - sign.d_y
+                        sign.down = False
+                        if abs(sign.rect.x - 700) < 100 and abs(sign.rect.y - 600) < 100:
+                            sign.rect.x = 700
+                            sign.rect.y= 600
+                        break
+                for sign in sign_build_sprite:
+                    if sign.down:
+                        sign.rect.x = event.pos[0] - sign.d_x
+                        sign.rect.y = event.pos[1] - sign.d_y
+                        sign.down = False
+                        if abs(sign.rect.x - 600) < 100 and abs(sign.rect.y - 600) < 100:
+                            sign.rect.x = 600
+                            sign.rect.y= 600
+                        break
+            if event.type == pygame.MOUSEMOTION:
+                for sign in sign_road_sprite:
+                    if event.buttons[0] == 1 and sign.rect.x <= event.pos[
+                        0] <= sign.rect.x + sign.rect.width and sign.rect.y <= event.pos[
+                        1] <= sign.rect.y + sign.rect.height:
+                        sign.rect.x = event.pos[0] - sign.d_x
+                        sign.rect.y = event.pos[1] - sign.d_y
+                        break
+                for sign in sign_build_sprite:
+                    if event.buttons[0] == 1 and sign.rect.x <= event.pos[
+                        0] <= sign.rect.x + sign.rect.width and sign.rect.y <= event.pos[
+                        1] <= sign.rect.y + sign.rect.height:
+                        sign.rect.x = event.pos[0] - sign.d_x
+                        sign.rect.y = event.pos[1] - sign.d_y
+                        break
+            if event.type == pygame.KEYDOWN:
+                keys = pygame.key.get_pressed()
+                if keys[13]:
+                    points = [(1050, 120)]
+                    tower_coords = []
+                    for sign in sign_road_sprite:
+                        if sign.rect.x != 700 and sign.rect.y != 600:
+                            points.append((sign.rect.x + sign.rect.width // 2, sign.rect.y + sign.rect.height // 2))
+                    points.append((64, 440))
+                    for sign in sign_build_sprite:
+                        if sign.rect.x != 600 and sign.rect.y != 600:
+                            tower_coords.append((sign.rect.x + sign.rect.width // 2, sign.rect.y + sign.rect.height // 2))
+                    draw_level(nicname, Image, X, Y, V_E, game, Tower_and_build, Tree,
+                               size, Backgroung, City, screen, Electro, Sea, Player, Pause,
+                               Continue, Restart, Exit, Evil, choice, Evil2, ROAD2, V1, V2,
+                               Game_over_anim, clock,  Gun, V,
+                               ROAD, sound, points, tower_coords)
+            backgroung_image.draw(screen, clear=True)
+            cityo.draw(screen)
+            seao.draw(screen)
+            electroo.draw(screen)
+            sign_road_sprite.draw(screen)
+            sign_build_sprite.draw(screen)
+            screen.blit(pygame.transform.scale(load_image("menu/enter.png"),
+                                               (200, 75)), (850, 600))
+        pygame.display.flip()
+        clock.tick(1000)
+    pygame.quit()
+
 
 
 def record(back, Particle, screen, backgroung_menu_image, screen_rect, clock):
