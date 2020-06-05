@@ -1,6 +1,9 @@
 import sqlite3
 import pygame
+
+from menu_objects import Back
 from secondary_functions import *
+from copy import deepcopy
 
 
 class SignRoad(pygame.sprite.Sprite):
@@ -200,6 +203,8 @@ def map_editor(nicname, draw_level, back, screen, backgroung_menu_image, clock, 
     Cityanim = 1
     Seaanim = 2
     Electroanim = 3
+    back_2 = Back()
+    back_2.rect.y = 0
     sign_road_sprite = pygame.sprite.Group()
     sign_build_sprite = pygame.sprite.Group()
     for _ in range(2):
@@ -286,13 +291,16 @@ def map_editor(nicname, draw_level, back, screen, backgroung_menu_image, clock, 
                                Continue, Restart, Exit, Evil, choice, Evil2, ROAD2, V1, V2,
                                Game_over_anim, clock,  Gun, V,
                                ROAD, sound, points, tower_coords)
-            backgroung_image.draw(screen, clear=True)
-            cityo.draw(screen)
-            seao.draw(screen)
-            electroo.draw(screen)
-            sign_road_sprite.draw(screen)
-            sign_build_sprite.draw(screen)
-            screen.blit(pygame.transform.scale(load_image("menu/enter.png"),
+            if back_2.update(event):
+                return
+        backgroung_image.draw(screen, clear=True)
+        cityo.draw(screen)
+        seao.draw(screen)
+        electroo.draw(screen)
+        sign_road_sprite.draw(screen)
+        sign_build_sprite.draw(screen)
+        back_2.draw(screen)
+        screen.blit(pygame.transform.scale(load_image("menu/enter.png"),
                                                (200, 75)), (850, 600))
         pygame.display.flip()
         clock.tick(1000)

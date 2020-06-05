@@ -12,6 +12,7 @@ def game(nicname, Tower_and_build, Tree, size, Backgroung, City, screen, Electro
          road_sprites_rotate=[], evil_points=[], check_game_view=False):
     towers = []
     evils = []
+    print(tower_coords)
     check_pause = False
     check_restart = False
     check_exit = False
@@ -23,6 +24,10 @@ def game(nicname, Tower_and_build, Tree, size, Backgroung, City, screen, Electro
         for i in range(20 // k):
             Tree(trees_sprite, road_sprites_horizontal, road_sprites_vertical, road_sprites_rotate,
                  tower_sprites_1, size)
+    else:
+        for i in range(len(tower_coords)):
+            a = Tower_and_build(tower_sprites_1, tower_coords[i])
+            towers.append(a)
     backgroung_image = Backgroung()
     cityo = City(screen)
     electroo = Electro(screen)
@@ -45,9 +50,7 @@ def game(nicname, Tower_and_build, Tree, size, Backgroung, City, screen, Electro
     gun_sprites = pygame.sprite.Group()
     Hit = 29
     MoveGun = 27
-    for i in range(len(tower_coords)):
-        a = Tower_and_build(tower_sprites_1, tower_coords[i])
-        towers.append(a)
+
     Pause(menu)
     Continue(menu_pause)
     Restart(menu_restart)
@@ -118,6 +121,7 @@ def game(nicname, Tower_and_build, Tree, size, Backgroung, City, screen, Electro
                 a = Evil2(Evil2_sprites, check_game_view, ROAD2, choice, evil_points)
                 evils.append(a)
                 gun_sprites = pygame.sprite.Group()
+                print(tower_sprites_1)
                 for i in range(len(tower_coords)):
                     a = Tower_and_build(tower_sprites_1, tower_coords[i])
                     towers.append(a)
@@ -234,7 +238,7 @@ def game(nicname, Tower_and_build, Tree, size, Backgroung, City, screen, Electro
                             x1, y1 = build.rect.x, build.rect.y
                             for evil in Evil_sprites:
                                 x2, y2 = evil.rect.x, evil.rect.y
-                                if (x2 - x1) ** 2 + (y2 - y1) ** 2 <= 30000:
+                                if (x2 + 30 - x1 - 20) ** 2 + (y2 + 30 - y1 - 20) ** 2 <= 30000:
                                     angle = count_coords(x1 + 20, y1 + 20,
                                                          x2 + 30,
                                                          y2 + 30)
@@ -242,18 +246,20 @@ def game(nicname, Tower_and_build, Tree, size, Backgroung, City, screen, Electro
                                         Gun(gun_sprites, sound['BUL'], V, x1 + 20, y1 + 20,
                                             angle)
                                         hit_done = True
+                                        print(1)
                                         break
                             if not hit_done:
                                 for evil2 in Evil2_sprites:
                                     x2, y2 = evil2.rect.x, evil2.rect.y
-                                    if (x2 - x1) ** 2 + (
-                                            y2 - y1) ** 2 <= 30000:
+                                    if (x2 + 30 - x1 - 20) ** 2 + (
+                                            y2 + 30 - y1 - 20) ** 2 <= 30000:
                                         angle = count_coords(x1 + 20, y1 + 20,
                                                              x2 + 30,
                                                              y2 + 30)
                                         if angle:
                                             Gun(gun_sprites, sound['BUL'], V, x1 + 20, y1 + 20,
                                                 angle)
+                                            print(2)
                                             break
 
                 if event.type == MoveGun:
